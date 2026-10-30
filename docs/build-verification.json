@@ -1,0 +1,118 @@
+{
+  "verified_at_utc": "2026-10-30T07:52:28.856325+00:00",
+  "source_revision": "7a03cc87d5874faee461726ca32a97be5eed7676",
+  "source_modules": 7,
+  "source_files": 25620,
+  "workflows": [
+    {
+      "workflow": "Build original modules",
+      "run_id": 41022400612,
+      "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022400612",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "windows (bandwidth-collector)",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022400612/job/123952564739"
+        },
+        {
+          "name": "java (simulator)",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022400612/job/123952564984"
+        },
+        {
+          "name": "java (detector-legacy)",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022400612/job/123952565008"
+        },
+        {
+          "name": "java (detector-phf)",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022400612/job/123952565030"
+        },
+        {
+          "name": "windows (collector-2023)",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022400612/job/123952565118"
+        },
+        {
+          "name": "upstream-2024",
+          "conclusion": "skipped",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022400612/job/123952565620"
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "original-detector-phf-java",
+          "bytes": 164870760,
+          "expired": false
+        },
+        {
+          "name": "original-collector-2023-windows-x64",
+          "bytes": 15704831,
+          "expired": false
+        },
+        {
+          "name": "original-detector-legacy-java",
+          "bytes": 157646779,
+          "expired": false
+        },
+        {
+          "name": "original-simulator-java",
+          "bytes": 14807811,
+          "expired": false
+        },
+        {
+          "name": "original-bandwidth-collector-windows-x64",
+          "bytes": 15755880,
+          "expired": false
+        }
+      ]
+    },
+    {
+      "workflow": "Verify",
+      "run_id": 41022375162,
+      "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022375162",
+      "conclusion": "success",
+      "jobs": [
+        {
+          "name": "feature-contracts",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022375162/job/123952432480"
+        },
+        {
+          "name": "java-replay",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022375162/job/123952432680"
+        },
+        {
+          "name": "windows-build",
+          "conclusion": "success",
+          "url": "https://github.com/Shmily1368/etw-behavior-detection/actions/runs/41022375162/job/123952432744"
+        }
+      ],
+      "artifacts": [
+        {
+          "name": "detector-java11",
+          "bytes": 9407996,
+          "expired": false
+        },
+        {
+          "name": "collector-windows-x64",
+          "bytes": 61751,
+          "expired": false
+        },
+        {
+          "name": "feature-contract-results",
+          "bytes": 1141,
+          "expired": false
+        }
+      ]
+    }
+  ],
+  "original_runtime_tests_executed": false,
+  "original_maven_test_execution": "Skipped; original Java compilation and packaging succeeded",
+  "portable_tests": "Feature contracts, asset identity, standalone PMML inference/repeatability and Windows adapter builds passed",
+  "optional_2024_build": "Not run: actual upstream ThirdPart and InterfaceCommon submodules are missing from the provided source snapshot",
+  "credential_cleanup": "Core literal audit and long historical literal comparison found no remaining matches; pre-cleanup artifacts removed; main has a sanitized root; cached copies are not guaranteed purged"
+}

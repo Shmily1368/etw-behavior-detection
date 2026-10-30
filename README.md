@@ -28,6 +28,8 @@ The 2024 integration references `ThirdPart` and `InterfaceCommon` submodules tha
 
 Windows collection runs on Windows with the original configuration files and required ETW permissions. Original Kafka applications additionally require a configured broker and the services enabled by their configuration. No macOS build environment is needed to use the GitHub build workflow.
 
+Build evidence and downloadable package names are recorded in [cloud build verification](docs/build-verification.md).
+
 ## Model and reproducibility
 
 The retained PMML random forest has a 2,863-position feature space, 950 active fields and 100 trees. The ordered API dictionary and model are bound by hashes in [the model manifest](models/manifest.json). Legacy group aggregation and newer stack-frequency aggregation have different semantics; the existing model is bound to its legacy feature baseline.
