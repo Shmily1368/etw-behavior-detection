@@ -1,0 +1,231 @@
+{
+	"filter": {
+		"process": [
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "notepad++.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "wpsupdate.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "SunloginClient.exe",
+				"process_path": ".*Oray\\SunLogin\\SunloginClient\\SunloginClient.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "QQProtectUpd.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "kernelUpdate.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "QQPYUserCenter.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "explorer.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "360huabao.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "aDrive.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "Skype.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "ComputerZTray.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "git.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "bash.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "Taskmgr.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "WmiPrvSE.exe",
+				"process_path": "Windows\\System.*\\wbem\\WmiPrvSE.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "SearchProtocolHost.exe",
+				"process_path": "Windows\\System.*\\SearchProtocolHost.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "backgroundTaskHost.exe",
+				"process_path": "Windows\\System.*\\backgroundTaskHost.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "firefox.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "MusNotification.exe",
+				"process_path": "",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "wpscloudsvr.exe",
+				"process_path": "Kingsoft\\WPS Office.*\\wpscloudsvr.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "msedge.exe",
+				"process_path": "Program Files.*\\Microsoft.*\\Edge\\Application\\msedge.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "taskeng.exe",
+				"process_path": "Windows\\System.*\\taskeng.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "TiWorker.exe",
+				"process_path": "Windows\\WinSxS.*\\TiWorker.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "wermgr.exe",
+				"process_path": "Windows\\System.*\\wermgr.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			},
+			{
+				"param": "-1",
+				"md5": "",
+				"process_name": "WeChat.exe",
+				"process_path": "Tencent\\WeChat\\WeChat.exe",
+				"process_commandline": "",
+				"process_user": "",
+				"parent_process_name": ""
+			}
+		]
+	}
+}

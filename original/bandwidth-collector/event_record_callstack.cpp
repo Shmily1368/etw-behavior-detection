@@ -1,0 +1,1861 @@
+#include "stdafx.h"
+#include "callstack_pruning.h"
+#include "event_record_manager.h"
+#include "obtain_entry_address.h"
+#include "event_record_callstack.h"
+#include "event_record.h"
+#include "tool_functions.h"
+#include "init_collector_online_parse.h"
+#include "init_collector.h"
+#include "setting.h"
+#include "callstack_pruning.h"
+#include "phf_detector.h"
+#include "thread_task_manager.h"
+#include "filter.h"
+#include <evntrace.h>
+#include <tdh.h>
+#include <Windows.h>
+#include <sstream>
+#include <unordered_set>
+
+using namespace std;
+ULONG64 EventRecordCallstack::parse_api_level_number = 0;
+
+std::unordered_map<DWORD, std::unordered_set<ULONG64>>EventRecordCallstack::process_address_cache;
+std::unordered_map<DWORD, std::unordered_map<ULONG64, std::string>>EventRecordCallstack::process_API_address_cache;
+std::unordered_map<DWORD, std::unordered_set<ULONG64>>EventRecordCallstack::process_address_useless_cache;
+std::unordered_map<DWORD, std::unordered_set<ULONG64>>EventRecordCallstack::APIaddress_keepon_cache;
+
+std::function<void(EventRecordCallstack*)> EventRecordCallstack::_parse_func = nullptr;
+
+#ifdef USE_RAW_SIGNATURE
+
+STRING_STRING_UMAP api_filename_mapping = 
+{
+	{"GetKeyState", "user32.dll"},
+	{"GetKeyboardState", "user32.dll"},
+	{"GetAsyncKeyState", "user32.dll"},
+	{"NtUserGetKeyState", "win32u.dll"},		//Win10 API;
+	{"NtUserGetKeyboardState", "win32u.dll"},	//Win10 API;
+	{"GetDC", "user32.dll"},
+	{"NtUserGetDC", "win32u.dll"},
+	{"BitBlt", "gdi32.dll"},
+	{"StretchBlt", "gdi32.dll"},
+	{"CreateDIBSection", "gdi32.dll"},			//Win10 API;
+	{"CreateCompatibleDC", "gdi32.dll"},
+	{"CreateCompatibleBitmap", "gdi32.dll"},
+	{"SetBkColor", "gdi32.dll"},
+	{"SelectObject", "gdi32.dll"},
+	{"SelectObjectImpl", "gdi32full.dll"},		//Win10 API;
+	{"NtGdiSelectBitmap", "win32u.dll"},			//Win10 API;
+	{"ZwCreateNamedPipeFile", "ntdll.dll"},
+	{"CreatePipe", "KernelBase.dll"},
+	{"ZwOpenProcess", "ntdll.dll"},
+	{"OpenProcess", "KernelBase.dll"},
+	{"ZwAllocateVirtualMemory", "ntdll.dll"},
+	{"VirtualAllocEx", "KernelBase.dll"},
+	//{"VirtualAlloc", "KernelBase.dll"},
+	{"ZwWriteVirtualMemory", "ntdll.dll"},
+	{"WriteProcessMemory", "KernelBase.dll"},
+	{"ZwQueryInformationProcess","ntdll.dll"},
+	{"K32GetProcessImageFileName","kernel32.dll"},
+	{"ZwDeviceIoControlFile","ntdll.dll"},
+	{"CryptImportKey","cryptsp.dll"},
+};
+
+STRING_SET api_need_set = 
+{
+	"GetKeyState",
+	"GetKeyboardState",
+	"GetAsyncKeyState",
+	"NtUserGetKeyState",			//Win10 API;
+	"NtUserGetKeyboardState",		//Win10 API;
+	"GetDC",
+	"NtUserGetDC",					//Win10 API;
+	"NtGdiCreateDIBSection",		//Win10 API;
+	"CreateCompatibleDC",
+	"CreateCompatibleBitmap",
+	"CreateDIBSection",				//Win10 API;
+	"NtGdiCreateCompatibleDC",		//Win10 API;
+	"NtGdiCreateCompatibleBitmap",	//Win10 API;
+	"BitBlt",
+	"NtGdiBitBlt",					//Win10 API;
+	"StretchBlt",
+	"NtGdiStretchBlt",				//Win10 API;
+	"SetBkColor", //1973703913(\\Windows\\SysWOW64\\gdi32.dll:SetBkColor),1973702794(\\Windows\\SysWOW64\\gdi32.dll:SelectObject)
+	"NtGdiSelectBitmap",			//Win10 API;
+	"SelectObject",
+	"SelectObjectImpl",				//Win10 API;
+	"NtGdiSelectBitmap",			//Win10 API;
+	"ZwCreateNamedPipeFile",
+	"CreatePipe",
+	"ZwOpenProcess",
+	"OpenProcess",
+	"ZwAllocateVirtualMemory",
+	"VirtualAllocEx",
+	//"VirtualAlloc",
+	"ZwWriteVirtualMemory",
+	"WriteProcessMemory",
+	"K32GetProcessImageFileName",
+	"CryptImportKey",
+};
+
+#else
+
+STRING_STRING_UMAP api_filename_mapping;
+STRING_SET api_need_set;
+
+#endif //USE_RAW_SIGNATURE;
+
+STRING_SET api_ntdll_need_set_win7 = 
+{
+	"ZwCreateNamedPipeFile",
+	"ZwOpenProcess",
+	"ZwAllocateVirtualMemory",   //process injection
+	"ZwWriteVirtualMemory",
+	"ZwQueryObject",
+	"ZwQueryInformationProcess",
+    "ZwFlushInstructionCache",
+};
+
+STRING_SET api_ntdll_need_set_win10 =
+{
+	"ZwCreateNamedPipeFile",
+	"ZwOpenProcess",
+	"ZwWriteVirtualMemory",
+	"ZwQueryInformationProcess",
+    "ZwFlushInstructionCache",
+};
+
+STRING_SET api_keepon_set_win7 = 
+{
+	"ZwFreeVirtualMemory",		// remotedesktop, GdipSaveImageToStream;
+	"ZwOpenSection",			// audiorecord, waveinopen;
+	"ZwWaitForSingleObject",	// waveinaddbuffer;
+	"ZwDeviceIoControlFile",
+    "ZwAllocateVirtualMemory",
+    "ZwFlushInstructionCache",
+    "ZwProtectVirtualMemory",
+    "ZwLockVirtualMemory",
+};
+
+STRING_SET api_keepon_set_win10 =
+{
+	"ZwFreeVirtualMemory",		// remotedesktop, GdipSaveImageToStream;
+	"ZwOpenSection",			// audiorecord, waveinopen;
+	"ZwWaitForSingleObject",	// waveinaddbuffer;
+	"ZwAllocateVirtualMemory",  // VirtualAllocExNuma;
+	"ZwDeviceIoControlFile",
+    "ZwFlushInstructionCache",
+    "ZwProtectVirtualMemory",
+    "ZwLockVirtualMemory",
+};
+
+EventRecordCallstack::EventRecordCallstack(PEVENT_RECORD raw_rec)
+{
+	OBJECT_MEMORY_MONITOR_CTOR(EventRecordCallstack);
+
+	ULONG64* p_data = (ULONG64*)raw_rec->UserData;
+	USHORT data_size = raw_rec->UserDataLength;
+	ULONG64 etw_stack_address;
+
+	event_identifier_ = EventIdentifier(raw_rec->EventHeader.ProviderId.Data1, raw_rec->EventHeader.EventDescriptor.Opcode);
+
+	time_stamp_ = *p_data++;
+	process_id_ = *(DWORD*)p_data;
+	thread_id_ = *((DWORD*)p_data + 1);
+	p_data++;
+
+	if (process_id_ == 0 || process_id_ == 4 || process_id_ == GetCurrentProcessId()) 
+	{
+		return;
+	}
+	pre_api_index = -1;
+	USHORT stack_size = data_size / 8 - 2;
+	for (int i = 0; i < stack_size; i++)
+	{
+		etw_stack_address = *(p_data + i);
+		entry_address_vector_[i] = etw_stack_address;
+		++vector_size;
+		if (etw_stack_address >= 0xfffff00000000000) // kernel address
+		{
+			kernel_start = i;
+		}
+	}
+
+	return;
+}
+
+EventRecordCallstack::EventRecordCallstack(int pid, int tid, ULONG64 timestamp)
+{
+	OBJECT_MEMORY_MONITOR_CTOR(EventRecordCallstack);
+	pre_api_index = -1;
+	thread_id_ = tid;
+	process_id_ = pid;
+	time_stamp_ = timestamp;
+	event_identifier_.provider_id(ETWStackWalk);
+	event_identifier_.opcode(32);
+	callstack_ = "";
+	vec_callstack_ = vector<int>();
+	label_ = "";
+}
+
+EventRecordCallstack::~EventRecordCallstack()
+{
+	OBJECT_MEMORY_MONITOR_DTOR(EventRecordCallstack);
+}
+
+void EventRecordCallstack::Init()
+{
+	int m = Setting::GetInstance().phf_method();
+	bool flag = Setting::GetInstance().step_by_step();
+	switch (m)
+	{
+	case 0:
+		if (flag)
+		{
+			_parse_func = ParseFullStackWithVectorStep;
+		}
+		else
+		{
+			_parse_func = ParseFullStackWithVector;
+		}
+		break;
+	case 1:
+		_parse_func = ParseFullStackWithoutVector;
+		break;
+	case 2:
+		_parse_func = ParseTopLevelAPI;
+		break;
+	case 3:
+		_parse_func = NoParseCallStack;
+		break;
+	default:
+		break;
+	}
+	
+	/*
+	if (Setting::GetInstance().optimize_api_parse())
+	{
+		switch (ToolFunctions::GetSystemOs())
+		{
+		case EM_OsVersion::WIN7:		_parse_func = ParseTopLevelAPIwithOptimize; break;
+		case EM_OsVersion::WIN10:		_parse_func = ParseTopLevelAPIwithOptimizeWin10; break;
+		case EM_OsVersion::WS2012_R2:	_parse_func = ParseTopLevelAPIwithOptimizeWS2012R2; break;
+		default:	break;
+		}
+	}
+	else
+	{
+		switch (ToolFunctions::GetSystemOs())
+		{
+		case EM_OsVersion::WIN7:
+		case EM_OsVersion::WIN10:		_parse_func = std::bind(ParseTopLevelAPIwithRunqinTrick, std::placeholders::_1, 0); break;
+		case EM_OsVersion::WS2012_R2:	_parse_func = std::bind(ParseTopLevelAPIwithRunqinTrickWS2012R2, std::placeholders::_1, 0); break;
+		default:	break;
+		}
+	}
+	*/
+}
+
+int EventRecordCallstack::parse() 
+{
+	/*if (Setting::GetInstance().local_detector_parse())
+	{
+		PhfDetector::GetInstance().TryDetectPhf();
+	}*/
+	_parse_func(this);
+	int m = Setting::GetInstance().phf_method();
+	bool flag = Setting::GetInstance().step_by_step();
+	switch (m)
+	{
+	case 0:
+		if (flag)
+		{
+			PhfDetector::GetInstance().ParseThread2ApisFullWithVecStep(this);
+		}
+		else
+		{
+			PhfDetector::GetInstance().ParseThread2ApisFullWithVec(this);
+		}
+		break;
+	case 1:
+		PhfDetector::GetInstance().ParseThread2ApisFullWithoutVec(this); 
+		break;
+	case 2:
+		PhfDetector::GetInstance().ParseThread2ApisTop(this);
+		break;
+	case 3:
+		PhfDetector::GetInstance().NoParseApis(this);
+		break;
+	default:
+		break;
+	}
+	return 0;
+}
+
+/*
+bool EventRecordCallstack::Output()
+{
+	int m = Setting::GetInstance().phf_method();
+	switch (m)
+	{
+	case 0:
+		PhfDetector::GetInstance().OutputDetectPhf();
+		break;
+	case 1:
+		PhfDetector::GetInstance().OutputDetectFullWithoutVec();  
+		break;
+	case 2:
+		PhfDetector::GetInstance().OutputDetectTop();  
+		break;
+	case 3:
+		PhfDetector::GetInstance().OutputDetectNo();  
+		break;
+	default:
+		break;
+	}
+	EventRecordManager::GetInstance().RecycleEventRecord(this);
+	return true;
+}
+*/
+
+bool EventRecordCallstack::Output()
+{
+	int m = Setting::GetInstance().phf_method();
+	bool flag = Setting::GetInstance().step_by_step();
+	switch (m)
+	{
+	case 0:
+		if (flag)
+		{
+			PhfDetector::GetInstance().StatisticPhfStep();
+		}
+		else
+		{
+			PhfDetector::GetInstance().StatisticPhf();
+		}
+		break;
+	case 1:
+		PhfDetector::GetInstance().StatisticFull();
+		break;
+	case 2:
+		PhfDetector::GetInstance().StatisticTop();
+		break;
+	case 3:
+		PhfDetector::GetInstance().StatisticNo();
+		break;
+	default:
+		break;
+	}
+	EventRecordManager::GetInstance().RecycleEventRecord(this);
+	return true;
+}
+
+/*
+bool EventRecordCallstack::Output()
+{
+	if (callstack_ == "CryptImportKey" || callstack_ == "K32GetProcessImageFileName") 
+	{
+		// ransom need push send
+		if (Filter::GetInstance().GetRansomDetector())
+		{
+            useless = true;
+            if (InitCollector::GetCollector())
+                InitCollector::GetCollector()->PushSendRecord(this);
+            return true;
+		}
+	}
+
+	if (!CallstackPruning::pruning(this))
+	{
+		return false;
+	}
+
+	this->QPCtimeToSystime();
+	bool flag = true;
+	//if (Setting::GetInstance().GetBool("local_detector_parse"))
+	if (Setting::GetInstance().local_detector_parse())
+	{
+		if (PhfDetector::GetInstance().PushBack(this) == nullptr)
+		{
+			flag = false;
+		}
+		else
+		{
+			const std::string label_t = GetLabel();
+			if (label_t == "RemoteDesktop" || label_t == "AudioRecord")
+				//sometime have more than one label,we do not handle this situation  
+			{
+				int index = label_t == "RemoteDesktop" ? 0 : 1;
+				if (InitCollectorOnlineParse::last_detect_time[index].count(get_thread_id_()))
+				{
+					//10s
+					if (get_time_stamp_() - InitCollectorOnlineParse::last_detect_time[index][get_thread_id_()] < 10000000000)
+					{
+						return false;
+					}
+					else
+					{
+						InitCollectorOnlineParse::last_detect_time[index][get_thread_id_()] = get_time_stamp_();
+					}
+				}
+				else
+				{
+					InitCollectorOnlineParse::last_detect_time[index][get_thread_id_()] = get_time_stamp_();
+				}
+			}
+			if (InitCollector::GetCollector())
+				InitCollector::GetCollector()->PushSendRecord(this);
+		}
+	}
+	else
+	{
+		if (InitCollector::GetCollector())
+			InitCollector::GetCollector()->PushSendRecord(this);
+	}
+
+	return flag;
+}
+*/
+
+void EventRecordCallstack::InitApiConfiguration()
+{
+#ifndef USE_RAW_SIGNATURE
+
+	std::fstream fp;
+	String read_str;
+
+	fp.open("api_configuration/api_filename_mapping", ios::in | ios::binary);
+	while (getline(fp, read_str))
+	{
+		STRING_VECTOR mapping_info;
+		StringUtil::split(ToolFunctions::DecryptStr(read_str), ':', mapping_info);
+		api_filename_mapping.insert(std::make_pair(mapping_info[0], mapping_info[1]));
+	}
+	fp.close();
+
+	fp.open("api_configuration/api_need_set", ios::in | ios::binary);
+	while (getline(fp, read_str))
+	{
+		api_need_set.insert(ToolFunctions::DecryptStr(read_str));
+	}
+	fp.close();
+
+#endif // !USE_RAW_SIGNATURE
+}
+
+void EventRecordCallstack::SetLabel(const String& label)
+{
+	if (label_ == "")
+		label_ = label;
+	else
+		label_ += string(",") + label;
+}
+
+void EventRecordCallstack::SetCallstack(const String& callstack)
+{
+	callstack_ = callstack;
+}
+
+String EventRecordCallstack::GetLabel()
+{
+	return label_;
+}
+
+String EventRecordCallstack::GetOutputInfo()
+{
+	if (Setting::GetInstance().local_detector_parse())
+	{
+		return label_;
+	}
+	else
+	{
+		return callstack_;
+	}
+}
+
+void EventRecordCallstack::ParseTopLevelAPIwithOptimize(EventRecordCallstack* ev)
+{
+	DWORD pid = ev->process_id_;
+	auto &modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+	if (!modelTree || ObtainEntryAddress::exe_node_map.find(pid) == ObtainEntryAddress::exe_node_map.end())
+	{		
+		ev->useless = true;
+		return;
+	}
+
+	ULONG64 exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	ULONG64 exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	bool flag = false;
+	String& ev_callstack = ev->callstack_;
+	const auto& address_stack = ev->entry_address_vector_;
+
+	int_32 iter = ev->kernel_start + 1;
+	int_32 vector_size = ev->vector_size;
+	for (; iter < vector_size; iter++)
+	{
+		if (flag)   // may be can add cache later for optimize
+		{
+			// do this operation because we find sometimes callstack:
+			/*{"processID":3432,"threadID":3676,"TimeStamp":8172785732,"CallStack":"18446735277688847513(NOMODULE-SYSTEMMODULE),
+			1962159625(\\Windows\\System32\\wow64cpu.dll:TurboDispatchJumpAddressEnd),
+			1962159551(\\Windows\\System32\\wow64cpu.dll:TurboDispatchJumpAddressEnd),
+			1962660486(\\Windows\\System32\\wow64.dll:Wow64SystemServiceEx),
+			1962657438(\\Windows\\System32\\wow64.dll:Wow64LdrpInitialize),
+			2001945539(\\Windows\\System32\\ntdll.dll:RtlImageDirectoryEntryToData),
+			2002360192(\\Windows\\System32\\ntdll.dll:longjmp),
+			2002007838(\\Windows\\System32\\ntdll.dll:LdrInitializeThunk),
+			1967466555(\\Windows\\SysWOW64\\user32.dll:GetKeyState),
+			1967466526(\\Windows\\SysWOW64\\user32.dll:GetKeyState),
+			5360515(\\Rats\\Dark Comet 5.3\\Dark Comet\\DarkComet.exe:NOAPI),
+			......
+			1967421578(\\Windows\\SysWOW64\\user32.dll:DispatchMessageW)"}*/
+
+			//next is exe address
+			if (address_stack[iter] < exe_address_end_ && address_stack[iter] >= exe_address_base_)
+			{
+				return;
+			}
+			//next address is NO-MODULE
+			node* search_module = modelTree->search(address_stack[iter]);
+			if (!search_module)
+			{
+				return;
+			}
+
+			//next address in current process and module is not API we need in 
+			if (strstr(search_module->key_value.FileName.c_str(), api_filename_mapping[ev_callstack].c_str()) == nullptr &&
+				api_ntdll_need_set_win7.find(ev_callstack) == api_ntdll_need_set_win7.end())			
+			//if (search_module->key_value.FileName.find(api_filename_mapping[ev_callstack]) == string::npos &&
+			//	api_ntdll_need_set_win7.find(ev_callstack) == api_ntdll_need_set_win7.end())
+			{
+				//ev->useless = true;   // remove by zxw on 20200804
+				return;
+			}
+			else
+			{
+				if (search_module->key_value.rva_tree == NULL)
+				{
+					//ev->useless = true;    // remove by zxw on 20200804
+					return;
+				}
+
+				// get function next
+				node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+				// can not get funcation name
+				if (!search_function)
+				{
+					//callstack_ = "1";
+					//ev->useless = true;    // remove by zxw on 20200804
+					return;
+				}
+
+				// next is still API we need, such as 
+				//1967466555(\\Windows\\SysWOW64\\user32.dll:GetKeyState),
+				//1967466526(\\Windows\\SysWOW64\\user32.dll:GetKeyState), 
+
+				// find such as this:
+				//8791757691994(\\Windows\\System32\\gdi32.dll:SelectObject)
+				//8791757692022(\\Windows\\System32\\gdi32.dll:CreateCompatibleDC)
+				if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end())
+				{
+					ev_callstack = search_function->key_value.FileName;
+					continue;
+				}
+				else
+				{
+					//callstack_ = "1";
+					//ev->useless = true;    // remove by zxw on 20200804
+					return;  //next is not current API
+				}
+			}
+
+		}
+		else
+		{
+			//save address such as Wow64LdrpInitialize.....always near with kernel and below actually func call
+            if (process_address_cache[pid].find(address_stack[iter]) != process_address_cache[pid].end())
+			{
+				continue;
+			}
+			// save address of system call we do not to parse 
+			else if ((process_address_useless_cache[pid]).count(address_stack[iter]))
+			{
+				// not one we need
+				ev->useless = true;
+				return;
+			}
+			// save address of system call we need 
+			else if ((process_API_address_cache[pid]).count(address_stack[iter]))
+			{  //address of API we need
+				flag = true;
+				ev_callstack = process_API_address_cache[pid][address_stack[iter]];
+				continue;
+			}
+			else if (APIaddress_keepon_cache[pid].count(address_stack[iter]))
+			{
+				ParseTopLevelAPIwithRunqinTrick(ev, iter + 1);
+				return;
+			}
+
+			node* search_module = modelTree->search(address_stack[iter]);
+			if (search_module)
+			{
+				if (strstr(search_module->key_value.FileName.c_str(), "wow64win.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "wow64cpu.dll") != nullptr || 
+					strstr(search_module->key_value.FileName.c_str(), "wow64.dll") != nullptr)
+				{
+					process_address_cache[pid].insert(address_stack[iter]);
+					continue;
+				}
+
+				if (search_module->key_value.rva_tree == NULL)
+				{
+					return;
+				}
+
+				if (strstr(search_module->key_value.FileName.c_str(), "ntdll.dll") != nullptr)
+				{
+					node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+					if (search_function != NULL)
+					{
+						if (search_function->key_value.FileName.substr(0, 2) != "Zw")
+						{
+							process_address_cache[pid].insert(address_stack[iter]);
+							continue;
+						}
+						else if (api_ntdll_need_set_win7.find(search_function->key_value.FileName) != api_ntdll_need_set_win7.end())
+						{
+							// this two address is different 
+							// so gamble, maybe need to change later；
+							// 2019.2.23: VanToM RAT 1.4 remoteshell is differnet from what we think before,
+							// So need to change gamble policy
+
+							//2019.2.27 find some bugs in previous version
+							//recover gamble design
+							if (iter != ev->kernel_start + 1)
+							{   // so gamble, maybe need to change later
+								flag = true;
+								process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+								ev_callstack = search_function->key_value.FileName;
+							}
+							else
+							{
+								if (iter == vector_size - 1)  // last address
+								{
+									ev_callstack = search_function->key_value.FileName;
+									return;
+								}
+								if (process_address_cache.find(address_stack[iter + 1]) != process_address_cache.end())
+								{
+									continue;
+								}
+								else
+								{
+									node* search_next_module = modelTree->search(address_stack[iter + 1]);
+									if (!search_next_module)
+									{
+										ev_callstack = search_function->key_value.FileName;
+										return;
+									}
+									else if (search_next_module->key_value.rva_tree == NULL)
+									{
+										continue;
+									}
+									else
+									{
+										node* search_next_func = (*(search_next_module->key_value.rva_tree)).search(address_stack[iter + 1] - search_next_module->key_value.ImageBase);
+										if (!search_next_func)
+										{
+											process_address_cache[pid].insert(address_stack[iter]);
+											continue;
+										}
+										if (api_need_set.find(search_next_func->key_value.FileName) != api_need_set.end())
+										{
+											flag = true;
+                                            // remove by zxw on 20200623 do not add "zw" in cache
+											//process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+											process_API_address_cache[pid][address_stack[iter + 1]] = search_next_func->key_value.FileName;
+											ev_callstack = search_next_func->key_value.FileName;
+											iter++;
+										}
+										else
+										{
+											process_address_cache[pid].insert(address_stack[iter]);
+											process_address_cache[pid].insert(address_stack[iter + 1]);
+											iter++;
+											continue;
+										}
+									}
+								}
+							}
+						}
+						else if (api_keepon_set_win7.find(search_function->key_value.FileName) != api_keepon_set_win7.end())
+						{  // no good way find,keep origin function
+							// add by zxw on 20200210
+							if (isKeeponParseAPI(ev, search_function->key_value.FileName, iter + 1))
+							{
+								APIaddress_keepon_cache[pid].insert(address_stack[iter]);
+								ParseTopLevelAPIwithRunqinTrick(ev, iter + 1);
+							}
+							return;
+						}
+						else
+						{
+							// API we need do not in ntdll.dll, can use this condition to filter data
+							process_address_useless_cache[pid].insert(address_stack[iter]);
+							ev->useless = true;
+							return;
+						}
+					}
+				}
+				else if (strstr(search_module->key_value.FileName.c_str(), "gdi32.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "user32.dll") != nullptr || 
+					strstr(search_module->key_value.FileName.c_str(), "win32u.dll") != nullptr || 
+					strstr(search_module->key_value.FileName.c_str(), "gdi32full.dll") != nullptr)				
+				{
+					node * search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+					if (!search_function)
+					{
+						process_address_useless_cache[pid].insert(address_stack[iter]);
+						ev->useless = true;
+						return;
+					}
+
+					if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end())
+					{
+						flag = true;
+						process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+						ev_callstack = search_function->key_value.FileName;
+					}
+					else
+					{
+						process_address_useless_cache[pid].insert(address_stack[iter]);
+						ev->useless = true;
+						return;
+					}
+                }
+                else if (strstr(search_module->key_value.FileName.c_str(), "kernel32.dll") != nullptr ||
+                strstr(search_module->key_value.FileName.c_str(), "KernelBase.dll") != nullptr)
+                {
+                    node * search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+                    if (!search_function) {
+                        process_address_useless_cache[pid].insert(address_stack[iter]);
+                        ev->useless = true;
+                        return;
+                    }
+
+                    if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end()) {
+                        flag = true;
+                        process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+                        ev_callstack = search_function->key_value.FileName;
+                    }
+                    else {
+                       continue;
+                    }
+                }
+				else
+				{
+					ev->useless = true;
+					return;
+				}
+			}
+			else
+			{
+				ev->useless = true;
+				return;
+			}
+		}
+	}
+
+	if (iter != vector_size)
+	{
+		ev->useless = true;
+	}
+}
+
+void EventRecordCallstack::ParseTopLevelAPIwithOptimizeWin10(EventRecordCallstack* ev)
+{
+	DWORD pid = ev->process_id_;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+	if (!modelTree || ObtainEntryAddress::exe_node_map.find(pid) == ObtainEntryAddress::exe_node_map.end())
+	{
+		ev->useless = true;
+		return;
+	}
+
+	ULONG64 exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	ULONG64 exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	bool flag = false;
+	String& ev_callstack = ev->callstack_;
+	const auto& address_stack = ev->entry_address_vector_;
+
+	int iter = ev->kernel_start + 1;
+	int vector_size = ev->vector_size;
+	for (; iter < vector_size; iter++)
+	{
+		if (flag)   // may be can add cache later for optimize
+		{
+			// do this operation because we find sometimes callstack:
+			/*{"processID":3432,"threadID":3676,"TimeStamp":8172785732,"CallStack":"18446735277688847513(NOMODULE-SYSTEMMODULE),
+			1962159625(\\Windows\\System32\\wow64cpu.dll:TurboDispatchJumpAddressEnd),
+			1962159551(\\Windows\\System32\\wow64cpu.dll:TurboDispatchJumpAddressEnd),
+			1962660486(\\Windows\\System32\\wow64.dll:Wow64SystemServiceEx),
+			1962657438(\\Windows\\System32\\wow64.dll:Wow64LdrpInitialize),
+			2001945539(\\Windows\\System32\\ntdll.dll:RtlImageDirectoryEntryToData),
+			2002360192(\\Windows\\System32\\ntdll.dll:longjmp),
+			2002007838(\\Windows\\System32\\ntdll.dll:LdrInitializeThunk),
+			1967466555(\\Windows\\SysWOW64\\user32.dll:GetKeyState),
+			1967466526(\\Windows\\SysWOW64\\user32.dll:GetKeyState),
+			5360515(\\Rats\\Dark Comet 5.3\\Dark Comet\\DarkComet.exe:NOAPI),
+			......
+			1967421578(\\Windows\\SysWOW64\\user32.dll:DispatchMessageW)"}*/
+
+			//next is exe address
+			if (address_stack[iter] < exe_address_end_ && address_stack[iter] >= exe_address_base_)
+			{
+				return;
+			}
+
+			//next address is NO-MODULE
+			node* search_module = modelTree->search(address_stack[iter]);
+			if (!search_module)
+			{
+				return;
+			}
+
+			//next address in current process and module is not API we need in 
+			if (search_module->key_value.rva_tree != NULL)
+			{
+				// get function next
+				node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+				// can not get function name
+				if (!search_function)
+				{
+					//ev->useless = true;    // remove by zxw on 20200804
+					return;
+				}
+
+				// next is still API we need, such as 
+				//1967466555(\\Windows\\SysWOW64\\user32.dll:GetKeyState),
+				//1967466526(\\Windows\\SysWOW64\\user32.dll:GetKeyState), 
+
+				// find such as this:
+				//8791757691994(\\Windows\\System32\\gdi32.dll:SelectObject)
+				//8791757692022(\\Windows\\System32\\gdi32.dll:CreateCompatibleDC)
+				if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end())
+				{
+					ev_callstack = search_function->key_value.FileName;
+					continue;
+				}
+				else
+				{
+					//ev->useless = true;    // remove by zxw on 20200804
+					return;  //next is not current API
+				}
+			}
+			else
+			{
+				return;
+			}
+		}
+		else
+		{
+			//save address such as Wow64LdrpInitialize.....always near with kernel and below actually func call
+			if (process_address_cache[pid].find(address_stack[iter]) != process_address_cache[pid].end())
+			{
+				continue;
+			}
+			// save address of system call we do not to parse 
+			else if (process_address_useless_cache[pid].find(address_stack[iter]) != process_address_useless_cache[pid].end())
+			{
+				// not one we need
+				ev->useless = true;
+				return;
+			}
+			// save address of system call we need 
+			else if (process_API_address_cache[pid].find(address_stack[iter]) != process_API_address_cache[pid].end())
+			{  //address of API we need
+				flag = true;
+				ev_callstack = process_API_address_cache[pid][address_stack[iter]];
+				continue;
+			}
+			else if (APIaddress_keepon_cache[pid].find(address_stack[iter]) != APIaddress_keepon_cache[pid].end())
+			{
+				ParseTopLevelAPIwithRunqinTrick(ev, iter + 1);
+				return;
+			}
+
+			node* search_module = modelTree->search(address_stack[iter]);
+			if (search_module)
+			{
+				if (strstr(search_module->key_value.FileName.c_str(), "wow64win.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "wow64cpu.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "wow64.dll") != nullptr)				
+				{
+					process_address_cache[pid].insert(address_stack[iter]);
+					continue;
+				}
+
+				if (search_module->key_value.rva_tree == NULL)
+				{
+					continue;
+				}
+
+				if (strstr(search_module->key_value.FileName.c_str(), "ntdll.dll") != nullptr)			
+				{
+					node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+					if (search_function != NULL)
+					{
+						if (search_function->key_value.FileName.substr(0, 2) != "Zw")
+						{
+							process_address_cache[pid].insert(address_stack[iter]);
+							continue;
+						}
+						else if (api_ntdll_need_set_win10.find(search_function->key_value.FileName) != api_ntdll_need_set_win10.end())
+						{
+							// this two address is different 
+							// so gamble, maybe need to change later；
+							// 2019.2.23: VanToM RAT 1.4 remoteshell is differnet from what we think before,
+							// So need to change gamble policy
+
+							//2019.2.27 find some bugs in previous version
+							//recover gamble design
+
+							if (iter != ev->kernel_start + 1)
+							{   // so gamble, maybe need to change later
+								flag = true;
+								process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+								ev_callstack = search_function->key_value.FileName;
+							}
+							else
+							{
+								if (iter == vector_size - 1)  // last address
+								{
+									ev_callstack = search_function->key_value.FileName;
+									return;
+								}
+
+								if (process_address_cache.find(address_stack[iter + 1]) != process_address_cache.end())
+								{
+									continue;
+								}
+								else
+								{
+									node* search_next_module = modelTree->search(address_stack[iter + 1]);
+									if (!search_next_module)
+									{
+										ev_callstack = search_function->key_value.FileName;
+										return;
+									}
+									else if (search_next_module->key_value.rva_tree == NULL)
+									{
+										continue;
+									}
+									else
+									{
+										//std::cout << search_next_module->key_value.FileName << std::endl;
+										node* search_next_func = (*(search_next_module->key_value.rva_tree)).search(address_stack[iter + 1] - search_next_module->key_value.ImageBase);
+										if (!search_next_func)
+										{
+											process_address_cache[pid].insert(address_stack[iter]);
+											continue;
+										}
+
+										if (api_need_set.find(search_next_func->key_value.FileName) != api_need_set.end())
+										{
+											flag = true;
+											process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+											process_API_address_cache[pid][address_stack[iter + 1]] = search_next_func->key_value.FileName;
+											ev_callstack = search_next_func->key_value.FileName;
+											iter++;
+										}
+										else
+										{
+											process_address_cache[pid].insert(address_stack[iter]);
+											process_address_cache[pid].insert(address_stack[iter + 1]);
+											iter++;
+											continue;
+										}
+									}
+								}
+							}
+						}
+						else if (api_keepon_set_win10.find(search_function->key_value.FileName) != api_keepon_set_win10.end())
+						{  // no good way find,keep origin function
+							// add by zxw on 20200210
+							if (isKeeponParseAPI(ev, search_function->key_value.FileName, iter + 1))
+							{								
+								APIaddress_keepon_cache[pid].insert(address_stack[iter]);
+								ParseTopLevelAPIwithRunqinTrick(ev, iter + 1);
+							}							
+							return;
+						}
+						else
+						{
+							// API we need do not in ntdll.dll, can use this condition to filter data
+							process_address_useless_cache[pid].insert(address_stack[iter]);
+							ev->useless = true;
+							return;
+						}
+					}
+				}
+				else if (strstr(search_module->key_value.FileName.c_str(), "gdi32.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "user32.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "win32u.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "gdi32full.dll") != nullptr)
+				{
+					node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+					if (!search_function)
+					{
+						process_address_useless_cache[pid].insert(address_stack[iter]);
+						ev->useless = true;
+						return;
+					}
+
+					if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end())
+					{
+						flag = true;
+						process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+						ev_callstack = search_function->key_value.FileName;
+					}
+					else
+					{
+						process_address_useless_cache[pid].insert(address_stack[iter]);
+						ev->useless = true;
+						return;
+					}
+                }
+                else if (strstr(search_module->key_value.FileName.c_str(), "kernel32.dll") != nullptr ||
+                strstr(search_module->key_value.FileName.c_str(), "KernelBase.dll") != nullptr) 
+                {
+                    node * search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+                    if (!search_function) {
+                        process_address_useless_cache[pid].insert(address_stack[iter]);
+                        ev->useless = true;
+                        return;
+                    }
+
+                    if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end()) {
+                        flag = true;
+                        process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+                        ev_callstack = search_function->key_value.FileName;
+                    }
+                    else {
+                        continue;
+                    }
+                }
+				else
+				{
+					ev->useless = true;
+					return;
+				}
+			}
+			else
+			{
+				ev->useless = true;
+				return;
+			}
+		}
+	}
+
+	if (iter != vector_size)
+	{
+		ev->useless = true;
+	}
+}
+
+void EventRecordCallstack::ParseTopLevelAPIwithOptimizeWS2012R2(EventRecordCallstack* ev)
+{
+	DWORD pid = ev->process_id_;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+	if (!modelTree || ObtainEntryAddress::exe_node_map.find(pid) == ObtainEntryAddress::exe_node_map.end())
+	{
+		ev->useless = true;
+		return;
+	}
+
+	ULONG64 exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	ULONG64 exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	bool flag = false;
+	String& ev_callstack = ev->callstack_;
+	const auto& address_stack = ev->entry_address_vector_;
+
+	int_32 iter = ev->kernel_start + 1;
+	int_32 vector_size = ev->vector_size;
+	for (; iter < vector_size; iter++)
+	{
+		if (flag)   // may be can add cache later for optimize
+		{
+			//next is exe address
+			if (address_stack[iter] < exe_address_end_ && address_stack[iter] >= exe_address_base_)
+			{
+				return;
+			}
+
+			//next address is NO-MODULE
+			node* search_module = modelTree->search(address_stack[iter]);
+			if (!search_module)
+			{
+				return;
+			}
+
+			//next address in current process and module is not API we need in 
+			if (search_module->key_value.rva_tree != NULL)
+			{
+				// get function next
+				node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+				// can not get function name
+				if (!search_function)
+				{
+					//ev->useless = true;    // remove by zxw on 20200804
+					return;
+				}
+
+				if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end())
+				{
+					ev_callstack = search_function->key_value.FileName;
+					continue;
+				}
+				else
+				{
+					//ev->useless = true;    // remove by zxw on 20200804
+					return;  //next is not current API
+				}
+			}
+			else
+			{
+				return;
+			}
+		}
+		else
+		{
+			//save address such as Wow64LdrpInitialize.....always near with kernel and below actually func call
+			if (process_address_cache[pid].find(address_stack[iter]) != process_address_cache[pid].end())
+			{
+				continue;
+			}
+			// save address of system call we do not to parse 
+			else if (process_address_useless_cache[pid].find(address_stack[iter]) != process_address_useless_cache[pid].end())
+			{
+				// not one we need
+				ev->useless = true;
+				return;
+			}
+			// save address of system call we need 
+			else if (process_API_address_cache[pid].find(address_stack[iter]) != process_API_address_cache[pid].end())
+			{  //address of API we need
+				flag = true;
+				ev_callstack = process_API_address_cache[pid][address_stack[iter]];
+				continue;
+			}
+			else if (APIaddress_keepon_cache[pid].find(address_stack[iter]) != APIaddress_keepon_cache[pid].end())
+			{
+				ParseTopLevelAPIwithRunqinTrickWS2012R2(ev, iter + 1);
+				return;
+			}
+
+			node* search_module = modelTree->search(address_stack[iter]);
+			if (search_module)
+			{
+				if (strstr(search_module->key_value.FileName.c_str(), "wow64win.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "wow64cpu.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "wow64.dll") != nullptr)
+				{
+					process_address_cache[pid].insert(address_stack[iter]);
+					continue;
+				}
+
+				if (search_module->key_value.rva_tree == NULL)
+				{
+					continue;
+				}
+
+				if (strstr(search_module->key_value.FileName.c_str(), "ntdll.dll") != nullptr)				
+				{
+					node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+					if (search_function != NULL)
+					{
+						if (search_function->key_value.FileName.substr(0, 2) != "Zw")
+						{
+							process_address_cache[pid].insert(address_stack[iter]);
+							continue;
+						}
+						else if (api_ntdll_need_set_win10.find(search_function->key_value.FileName) != api_ntdll_need_set_win10.end())
+						{
+							// this two address is different 
+							// so gamble, maybe need to change later；
+							// 2019.2.23: VanToM RAT 1.4 remoteshell is differnet from what we think before,
+							// So need to change gamble policy
+
+							//2019.2.27 find some bugs in previous version
+							//recover gamble design
+
+							if (iter != ev->kernel_start + 1)
+							{   // so gamble, maybe need to change later
+								flag = true;
+								process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+								ev_callstack = search_function->key_value.FileName;
+							}
+							else
+							{
+								if (iter == vector_size - 1)  // last address
+								{
+									ev_callstack = search_function->key_value.FileName;
+									return;
+								}
+
+								if (process_address_cache.find(address_stack[iter + 1]) != process_address_cache.end())
+								{
+									continue;
+								}
+								else
+								{
+									node* search_next_module = modelTree->search(address_stack[iter + 1]);
+									if (!search_next_module)
+									{
+										ev_callstack = search_function->key_value.FileName;
+										return;
+									}
+									else if (search_next_module->key_value.rva_tree == NULL)
+									{
+										continue;
+									}
+									else
+									{
+										//std::cout << search_next_module->key_value.FileName << std::endl;
+										node* search_next_func = (*(search_next_module->key_value.rva_tree)).search(address_stack[iter + 1] - search_next_module->key_value.ImageBase);
+										if (!search_next_func)
+										{
+											process_address_cache[pid].insert(address_stack[iter]);
+											continue;
+										}
+
+										if (api_need_set.find(search_next_func->key_value.FileName) != api_need_set.end())
+										{
+											flag = true;
+                                            // remove by zxw on 20200623 do not add "zw" in cache
+											//process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+											process_API_address_cache[pid][address_stack[iter + 1]] = search_next_func->key_value.FileName;
+											ev_callstack = search_next_func->key_value.FileName;
+											iter++;
+										}
+										else
+										{
+											process_address_cache[pid].insert(address_stack[iter]);
+											process_address_cache[pid].insert(address_stack[iter + 1]);
+											iter++;
+											continue;
+										}
+									}
+								}
+							}
+						}
+						else if (api_keepon_set_win10.find(search_function->key_value.FileName) != api_keepon_set_win10.end())
+						{  // no good way find,keep origin function
+							// add by zxw on 20200210
+							if (isKeeponParseAPI(ev, search_function->key_value.FileName, iter + 1))
+							{
+								APIaddress_keepon_cache[pid].insert(address_stack[iter]);
+								ParseTopLevelAPIwithRunqinTrickWS2012R2(ev, iter + 1);
+							}
+							return;
+						}
+						else
+						{
+							// API we need do not in ntdll.dll, can use this condition to filter data
+							process_address_useless_cache[pid].insert(address_stack[iter]);
+							ev->useless = true;
+							return;
+						}
+					}
+				}
+				else if (strstr(search_module->key_value.FileName.c_str(), "gdi32.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "user32.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "win32u.dll") != nullptr ||
+					strstr(search_module->key_value.FileName.c_str(), "gdi32full.dll") != nullptr)			
+				{
+					node* search_function = (*(search_module->key_value.rva_tree)).search(address_stack[iter] - search_module->key_value.ImageBase);
+					if (!search_function)
+					{
+						process_address_useless_cache[pid].insert(address_stack[iter]);
+						ev->useless = true;
+						return;
+					}
+
+					if (api_need_set.find(search_function->key_value.FileName) != api_need_set.end())
+					{
+						flag = true;
+						process_API_address_cache[pid][address_stack[iter]] = search_function->key_value.FileName;
+						ev_callstack = search_function->key_value.FileName;
+					}
+					else
+					{
+						if (search_function->key_value.FileName == "GetClassNameW")
+						{
+							ULONG64 offset = address_stack[iter] - search_module->key_value.ImageBase - search_function->key_value.ImageBase;
+							if (offset >= 0x6c && offset <= 0x83)
+							{
+								ev_callstack = "GetKeyState";
+								return;
+							}
+						}
+
+						process_address_useless_cache[pid].insert(address_stack[iter]);
+						ev->useless = true;
+						return;
+					}
+				}
+				else
+				{
+					ev->useless = true;
+					return;
+				}
+			}
+			else
+			{
+				ev->useless = true;
+				return;
+			}
+		}
+	}
+
+	if (iter != vector_size)
+	{
+		ev->useless = true;
+	}
+}
+
+void EventRecordCallstack::ParseFullStackWithVector(EventRecordCallstack* ev)
+{
+	std::string callstack_;
+	DWORD pid = ev->process_id_;
+	int N = 5;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+
+	int  iter = 0;
+	int length = ev->vector_size;
+	if (length == 0) { return; }
+	int n = length - 1 > N - 1 ? N - 1 : length - 1;
+
+	const auto& address_stack = ev->entry_address_vector_;
+	//String& ev_callstack = ev->callstack_;//blank or ox address
+	vector<int>& ev_vec_callstack = ev->vec_callstack_;
+
+	if (iter == length) return;
+
+	unsigned long long exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	unsigned long long exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	unsigned long long exe_address_base = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+
+	for (; iter != length; iter++) {
+		unsigned long long temp_iter = address_stack[iter];
+		if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_) {
+			break;
+		}
+	}
+	if (ev_vec_callstack.empty() && length) {
+		while (--iter, iter >= 0 && n >= 0 && address_stack[iter] < 0xfffff00000000000) {
+			unsigned long long temp_iter = address_stack[iter];
+			callstack_ = ConvertAddress2APIName(ev, temp_iter);
+			if (strstr(callstack_.c_str(), "NOOAPI") == nullptr && strstr(callstack_.c_str(), "NOMODULE") == nullptr && strstr(callstack_.c_str(), "NOAPI") == nullptr)
+			{
+				callstack_ = modelTree->search(temp_iter)->key_value.FileName + ":" + callstack_;
+				//ev_callstack.append(callstack_ + "->");
+				int now = PhfDetector::GetInstance().FindApiIndex(callstack_);
+				if (now != -1 && now != ev->pre_api_index)
+				{
+					ev_vec_callstack.push_back(now);
+					ev->pre_api_index = now;
+				}
+			}
+		}
+
+		if (PhfDetector::GetInstance().isUselessCallstack(ev_vec_callstack))
+		{
+			ev_vec_callstack.clear();
+		}
+	}
+
+}
+
+void EventRecordCallstack::ParseFullStackWithVectorStep(EventRecordCallstack* ev)
+{
+	std::string callstack_;
+	DWORD pid = ev->process_id_;
+	DWORD tid = ev->thread_id_;
+	ULONG64 timestamp = ev->time_stamp_;
+	int N = 5;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+
+	int  iter = 0;
+	int length = ev->vector_size;
+	if (length == 0) { return; }
+	int n = length - 1 > N - 1 ? N - 1 : length - 1;
+
+	const auto& address_stack = ev->entry_address_vector_;
+	String& ev_callstack = ev->callstack_;//blank or ox address
+	vector<int>& ev_vec_callstack = ev->vec_callstack_;
+
+	if (iter == length) return;
+
+	unsigned long long exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	unsigned long long exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	unsigned long long exe_address_base = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+
+	for (; iter != length; iter++) {
+		unsigned long long temp_iter = address_stack[iter];
+		if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_) {
+			break;
+		}
+	}
+	if (ev_vec_callstack.empty() && length) {
+		while (--iter, iter >= 0 && n >= 0 && address_stack[iter] < 0xfffff00000000000) {
+			unsigned long long temp_iter = address_stack[iter];
+			callstack_ = ConvertAddress2APIName(ev, temp_iter);
+			if (strstr(callstack_.c_str(), "NOOAPI") == nullptr && strstr(callstack_.c_str(), "NOMODULE") == nullptr && strstr(callstack_.c_str(), "NOAPI") == nullptr)
+			{
+				callstack_ = modelTree->search(temp_iter)->key_value.FileName + ":" + callstack_;
+				if (process_to_str_len[0].count(pid) == 0)
+				{
+					if (pid_to_thread.count(pid) == 0)pid_to_thread[pid] = std::make_pair(tid, timestamp);
+					process_to_str_len[0][pid] = callstack_.size()+1;
+				}
+				else
+				{
+					process_to_str_len[0][pid] += callstack_.size() + 1;
+				}
+				int now = PhfDetector::GetInstance().FindAllApiIndex(callstack_);
+				if (now != -1)
+				{
+					if (process_to_str_len[1].count(pid) == 0)
+					{
+						process_to_str_len[1][pid] = (to_string(now)).size() + 1;
+					}
+					else
+					{
+						process_to_str_len[1][pid] += (to_string(now)).size() + 1;
+					}
+				}
+				now = PhfDetector::GetInstance().FindApiIndex(callstack_);
+				if (now != -1)
+				{
+					if (process_to_str_len[2].count(pid) == 0)
+					{
+						process_to_str_len[2][pid] = (to_string(now)).size() + 1;
+					}
+					else
+					{
+						process_to_str_len[2][pid] += (to_string(now)).size() + 1;
+					}
+				}
+
+				if (now != -1 && now != ev->pre_api_index)
+				{
+					if (process_to_str_len[3].count(pid) == 0)
+					{
+						process_to_str_len[3][pid] = (to_string(now)).size() + 1;
+					}
+					else
+					{
+						process_to_str_len[3][pid] += (to_string(now)).size() + 1;
+					}
+					ev_vec_callstack.push_back(now);
+					ev->pre_api_index = now;
+				}
+			}
+		}
+
+		if (PhfDetector::GetInstance().isUselessCallstack(ev_vec_callstack))
+		{
+			ev_vec_callstack.clear();
+		}
+		else
+		{
+			string s = "";
+			for (int call : ev_vec_callstack)
+			{
+				s += to_string(call) + ",";
+			}
+			if (process_to_str_len[4].count(pid) == 0)
+			{
+				process_to_str_len[4][pid] = s.size() ;
+			}
+			else
+			{
+				process_to_str_len[4][pid] += s.size() ;
+			}
+		}
+	}
+
+}
+
+void EventRecordCallstack::ParseFullStackWithoutVector(EventRecordCallstack* ev)//real use in win10 OS byWJ
+{
+	std::string callstack_;
+	DWORD pid = ev->process_id_;
+	int N = 5;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+
+	int  iter = 0;
+	int length = ev->vector_size;
+	if (length == 0) { return; }
+	int n = length - 1 > N - 1 ? N - 1 : length - 1;
+
+	const auto& address_stack = ev->entry_address_vector_;
+	String& ev_callstack = ev->callstack_;//blank or ox address
+	vector<int>& ev_vec_callstack = ev->vec_callstack_;
+
+	if (iter == length) return;
+
+	unsigned long long exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	unsigned long long exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	unsigned long long exe_address_base = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+
+	for (; iter != length; iter++) {
+		unsigned long long temp_iter = address_stack[iter];
+		if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_) {
+			break;
+		}
+	}
+	if (ev_callstack.empty() && length) {
+		while (--iter, iter >= 0 && n >= 0 && address_stack[iter] < 0xfffff00000000000) {
+			unsigned long long temp_iter = address_stack[iter];
+			callstack_ = ConvertAddress2APIName(ev, temp_iter);
+			if (strstr(callstack_.c_str(), "NOOAPI") == nullptr && strstr(callstack_.c_str(), "NOMODULE") == nullptr && strstr(callstack_.c_str(), "NOAPI") == nullptr)
+			{
+				callstack_ = modelTree->search(temp_iter)->key_value.FileName + ":" + callstack_;
+				int index = PhfDetector::GetInstance().FindAllApiIndex(callstack_);
+				if (index != -1)
+				{
+					if(!ev_callstack.empty()) ev_callstack.append("-");
+					ev_callstack.append(to_string(index));
+				}
+			}
+		}
+	}
+}
+
+void EventRecordCallstack::ParseTopLevelAPI(EventRecordCallstack* ev)
+{
+	std::string callstack_;
+	DWORD pid = ev->process_id_;
+	int N = 5;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+
+	int  iter = 0;
+	int length = ev->vector_size;
+	if (length == 0) { return; }
+	int n = length - 1 > N - 1 ? N - 1 : length - 1;
+
+	const auto& address_stack = ev->entry_address_vector_;
+	String& ev_callstack = ev->callstack_;//blank or ox address
+
+	if (iter == length) return;
+
+	unsigned long long exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	unsigned long long exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	unsigned long long exe_address_base = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+
+	for (; iter != length; iter++) {
+		unsigned long long temp_iter = address_stack[iter];
+		if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_) {
+			break;
+		}
+	}
+	if (ev_callstack.empty() && length) {
+		while (--iter, iter >= 0 && n >= 0 && address_stack[iter] < 0xfffff00000000000) {
+			unsigned long long temp_iter = address_stack[iter];
+			callstack_ = ConvertAddress2APIName(ev, temp_iter);
+			if (strstr(callstack_.c_str(), "NOOAPI") == nullptr && strstr(callstack_.c_str(), "NOMODULE") == nullptr && strstr(callstack_.c_str(), "NOAPI") == nullptr)
+			{
+				callstack_ = modelTree->search(temp_iter)->key_value.FileName + ":" + callstack_;
+				int index = PhfDetector::GetInstance().FindAllApiIndex(callstack_);
+				if (index != -1)
+				{
+					ev_callstack.append(to_string(index));
+				}
+				return;
+			}
+		}
+	}
+}
+
+void EventRecordCallstack::NoParseCallStack(EventRecordCallstack* ev)
+{
+	return; //just no parse, for make a compare
+}
+
+void EventRecordCallstack::ParseTopLevelAPIwithRunqinTrick(EventRecordCallstack* ev, int start_index /*= 0*/)
+{
+	int iter = start_index;
+	int length = ev->vector_size;
+	if (iter == length) return;
+
+	DWORD pid = ev->process_id_;
+	if (ObtainEntryAddress::exe_node_map.find(pid) == ObtainEntryAddress::exe_node_map.end())
+	{
+		return;
+	}
+
+	ULONG64 exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	ULONG64 exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+
+	String& ev_callstack = ev->callstack_;
+	const auto& address_stack = ev->entry_address_vector_;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+	if (modelTree)
+	{
+		for (iter = start_index; iter < length; iter++)
+		{
+			ULONG64 temp_iter = address_stack[iter];
+			if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_)
+			{
+				break;
+			}
+			if (temp_iter >= 0xfffff00000000000)
+			{
+				continue;
+			}
+
+			node* search_module = modelTree->search(temp_iter);
+			if (!search_module)
+			{
+				break;
+			}
+
+			if (strstr(search_module->key_value.FileName.c_str(), "winmm.dll") != nullptr ||
+				strstr(search_module->key_value.FileName.c_str(), "winmmbase.dll") != nullptr)
+			{
+				node* search_function = (*(search_module->key_value.rva_tree)).search(temp_iter - search_module->key_value.ImageBase);
+				if (search_function)
+				{
+					ev_callstack = search_function->key_value.FileName;
+					if (ev_callstack == "waveInOpen" || ev_callstack == "waveInAddBuffer")
+					{
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	string temp_callstack_ = "";
+	while (--iter, iter >= start_index)
+	{
+		ULONG64 temp_iter = address_stack[iter];
+		if (temp_iter < 0xfffff00000000000)
+		{
+			ev_callstack = std::move(ConvertAddress2APIName(ev, temp_iter));
+			if (strstr(ev_callstack.c_str(), "NOOAPI") != nullptr ||
+				strstr(ev_callstack.c_str(), "NOMODULE") != nullptr ||
+				strstr(ev_callstack.c_str(), "NOAPI") != nullptr)			
+			{
+				continue;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	if (iter < 0) return;
+}
+
+void EventRecordCallstack::ParseTopLevelAPIwithRunqinTrickWS2012R2(EventRecordCallstack* ev, int_32 start_index /*= 0*/)
+{
+	int_32 iter = start_index;
+	int_32 length = ev->vector_size;
+	if (iter == length) return;
+
+	DWORD pid = ev->process_id_;
+	if (ObtainEntryAddress::exe_node_map.find(pid) == ObtainEntryAddress::exe_node_map.end())
+	{
+		return;
+	}
+
+	ULONG64 exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	ULONG64 exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+
+	String& ev_callstack = ev->callstack_;
+	const auto& address_stack = ev->entry_address_vector_;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+	for (iter = start_index; iter < length; iter++)
+	{
+		ULONG64 temp_iter = address_stack[iter];
+		if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_)
+		{
+			break;
+		}
+		if (temp_iter < 0xfffff00000000000 && modelTree)
+		{
+			node* search_module = modelTree->search(temp_iter);
+			if (!search_module || strstr(search_module->key_value.FileName.c_str(), "mciwave.dll") != nullptr)
+			{
+				break;
+			}
+			if (strstr(search_module->key_value.FileName.c_str(), "winmm.dll") != nullptr ||
+				strstr(search_module->key_value.FileName.c_str(), "winmmbase.dll") != nullptr)			
+			{
+				node* search_function = (*(search_module->key_value.rva_tree)).search(temp_iter - search_module->key_value.ImageBase);
+				if (search_function)
+				{
+					ev_callstack = search_function->key_value.FileName;
+					if (ev_callstack == "waveInOpen" || ev_callstack == "waveInAddBuffer")
+					{
+						return;
+					}
+				}
+			}
+		}
+	}
+
+	string temp_callstack_ = "";
+	while (--iter, iter >= start_index)
+	{
+		ULONG64 temp_iter = address_stack[iter];
+		if (temp_iter < 0xfffff00000000000)
+		{
+			ev_callstack = std::move(ConvertAddress2APIName(ev, temp_iter));
+			if (strstr(ev_callstack.c_str(), "NOOAPI") != nullptr ||
+				strstr(ev_callstack.c_str(), "NOMODULE") != nullptr ||
+				strstr(ev_callstack.c_str(), "NOAPI") != nullptr)			
+			{
+				continue;
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	if (iter < 0) return;
+}
+
+String EventRecordCallstack::ConvertAddress2APIName(EventRecordCallstack* ev, ULONG64 address)
+{
+	// convert address to api_name from here
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[ev->process_id_ % Max_Process_ID];
+	if (!modelTree)
+	{
+		return EMPTY_STRING;
+	}
+
+	String ret;
+	node* search_module = modelTree->search(address);
+	if (search_module != NULL)
+	{
+		//string module_name_result = search_module->key_value.FileName;
+		if (!Setting::GetInstance().local_detector_parse())
+			ret = search_module->key_value.FileName;
+
+		// the dll is not load and parse successfully
+		if (search_module->key_value.rva_tree == NULL)
+		{
+			ret.append(":NOAPI");
+			//temp.clear();
+		}
+		else
+		{
+			node * search_function = (*(search_module->key_value.rva_tree)).search((address)-search_module->key_value.ImageBase);
+			if (search_function != NULL)
+			{
+				if (InitCollector::GetCollector()->GetMode() == ONLINE_PARSE_MODE)
+				{
+					ret = search_function->key_value.FileName;
+
+					//RUAN's computer,offset is GdipCreateSolidFill + 0x191db
+					//To solve code suspend problem
+					if (search_module->key_value.FileName.find("GdiPlus.dll") != String::npos)
+					{
+						ULONG64 offset = address - search_module->key_value.ImageBase - search_function->key_value.ImageBase;
+						if (offset > 0x10000 && search_function->key_value.ImageEnd == INT_MAX)
+						{
+							ret = "GdipSaveImageToStream";
+						}
+					}
+				}
+				else
+				{
+					String api_name_result = search_function->key_value.FileName;
+					ret.append(":").append(api_name_result); // all parse successfully
+				}
+				/* check api and return string shorter than 9 */
+			}
+			else
+			{
+				ret.append(":NOOAPI"); // can't match any rva
+				//temp.clear();
+			}
+		}
+	}
+	// can't find a module match the address(moduleBase < address < moduleEnd)
+	else
+	{
+		if (address >= 0xfffff00000000000)
+		{
+			ret.append("NOMODULE-SYSTEMMODULE");
+		}
+		else
+		{
+			ret.append("NOMODULE");
+		}
+	}
+
+	return ret;
+}
+
+bool EventRecordCallstack::isKeeponParseAPI(EventRecordCallstack * ev, String apiname, int_32 index)
+{
+	int_32 length = ev->vector_size;
+	if (index >= length) return false;
+
+	DWORD pid = ev->process_id_;
+	const auto& address_stack = ev->entry_address_vector_;
+	auto& modelTree = ObtainEntryAddress::moduleAddressTree[pid % Max_Process_ID];
+	ULONG64 exe_address_base_ = ObtainEntryAddress::exe_node_map[pid].ImageBase;
+	ULONG64 exe_address_end_ = ObtainEntryAddress::exe_node_map[pid].ImageEnd;
+	if (strstr(apiname.c_str(), "ZwDeviceIoControlFile") != nullptr)
+	{
+		ULONG64 temp_iter = address_stack[index];
+		if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_)
+		{
+			return false;
+		}
+		if (temp_iter < 0xfffff00000000000 && modelTree)
+		{
+			node* search_module = modelTree->search(temp_iter);
+			if (!search_module || strstr(search_module->key_value.FileName.c_str(), "bcrypt.dll") == nullptr)
+			{	// if next filename is not bcrypt.dll do not keep on parse
+				return false;
+			}
+		}
+	}
+	else if (strstr(apiname.c_str(), "ZwWaitForSingleObject") != nullptr)
+	{
+		if (index + 3 >= length) return false;
+		ULONG64 temp_iter = address_stack[index + 3];
+		if (temp_iter < exe_address_end_ && temp_iter >= exe_address_base_)
+		{
+			return false;
+		}
+		if (temp_iter < 0xfffff00000000000 && modelTree)
+		{
+			node* search_module = modelTree->search(temp_iter);
+			if (!search_module || (strstr(search_module->key_value.FileName.c_str(), "winmm.dll") == nullptr &&
+				strstr(search_module->key_value.FileName.c_str(), "winmmbase.dll") == nullptr))
+			{	// if next filename is not winmm.dll or winmmbase.dll do not keep on parse
+				return false;
+			}
+		}
+	}
+	else
+	{
+		return true;
+	}
+	
+	return true;
+}

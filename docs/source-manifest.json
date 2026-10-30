@@ -1,0 +1,37 @@
+{
+  "bandwidth-collector": {
+    "files": 12243,
+    "bytes": 227218227,
+    "tree_sha256": "9672ba72d680850bc1d598e9f3c2391b912aed0381fb70b2efd4cc7bb3991157"
+  },
+  "collector-2023": {
+    "files": 12243,
+    "bytes": 227204747,
+    "tree_sha256": "357a0dd0a8f795f3475c7c1c1e0c85ed92e62c0ee5f6afeda064c7920c27bb95"
+  },
+  "collector-2024": {
+    "files": 607,
+    "bytes": 38871365,
+    "tree_sha256": "9f732d1f3abad25f561e9e672fe402bb06d9a1a03ad78191b1de7760e4985aa9"
+  },
+  "detector-legacy": {
+    "files": 248,
+    "bytes": 1102312,
+    "tree_sha256": "fad4fae0136e9669e772125b339ba72a473d9f2635cab04a48b4ff549c0edbbb"
+  },
+  "detector-phf": {
+    "files": 250,
+    "bytes": 4152772,
+    "tree_sha256": "674b0af101c8c12bc11a7583be39b2d2b792a8bd246b296b8ced2f3f88f6a3c9"
+  },
+  "performance-test": {
+    "files": 2,
+    "bytes": 579,
+    "tree_sha256": "5149d8422163a0a2740f7bf2ece6fae63c70b8181915a6e237d54c2bd1c6555c"
+  },
+  "simulator": {
+    "files": 27,
+    "bytes": 143212,
+    "tree_sha256": "c8abfd2899b1b09fbb4c70d9147a598d96621fef8c4de8356ccd6d8c7f8680df"
+  }
+}

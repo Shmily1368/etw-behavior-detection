@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ETW behavior model result",
+  "type": "object",
+  "required": ["schema_version", "id", "feature_version", "model_sha256", "api_dictionary_sha256", "class_code", "behavior", "model_score", "status", "interpretation", "input_provenance"],
+  "properties": {
+    "schema_version": {"const": "detections-v1"},
+    "id": {"type": "string"},
+    "feature_version": {"type": "string"},
+    "model_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "api_dictionary_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "class_code": {"type": "string"},
+    "behavior": {"type": "string"},
+    "model_score": {"type": "number", "minimum": 0, "maximum": 1},
+    "status": {"const": "classified"},
+    "interpretation": {"type": "string"},
+    "input_provenance": {"type": "object"}
+  }
+}

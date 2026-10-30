@@ -1,0 +1,8 @@
+# Synthetic contract fixture: not collected ETW data or detection evidence.
+# process_key<TAB>ordered zero-based API indices
+fixture-process	0,1
+fixture-process	0,1
+fixture-process	0,2
+fixture-process	3,4
+fixture-process	3,5
+fixture-process	6

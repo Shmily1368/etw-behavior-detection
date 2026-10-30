@@ -1,0 +1,72 @@
+{
+  "ThirdPart.zip": {
+    "files": 83,
+    "bytes": 393922768,
+    "directories": {
+      "ThirdPart/boost/include": 5,
+      "ThirdPart/DuiLib_Ultimate/bin": 4,
+      "ThirdPart/DuiLib_Ultimate/lib": 8,
+      "ThirdPart/DuiLib_Ultimate/src": 8,
+      "ThirdPart/mad/madCollection": 10,
+      "ThirdPart/NetFilterSDK/bin": 8,
+      "ThirdPart/NetFilterSDK/nfapi": 1,
+      "ThirdPart/NetFilterSDK/protocolfilters": 21,
+      "ThirdPart/NetFilterSDK/server": 6,
+      "ThirdPart/protobuf/bin": 8,
+      "ThirdPart/protobuf/lib": 2,
+      "ThirdPart/sdhash/win32": 1,
+      "ThirdPart/sdhash/x64": 1
+    },
+    "extensions": {
+      ".hpp": 5,
+      ".pdb": 52,
+      ".zip": 10,
+      ".log": 8,
+      ".info": 1,
+      ".c": 6,
+      ".h": 1
+    },
+    "libraries": [
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/ADMonSetup/Res/ADMonSetup.zip",
+        "bytes": 53957
+      },
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/bdwallpaper/Res/bdwallpaper.zip",
+        "bytes": 117993
+      },
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/duidemo/Res/duidemo.zip",
+        "bytes": 7370821
+      },
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/gamebox/Res/GameBox.zip",
+        "bytes": 888823
+      },
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/transwnd/Res/transwnd.zip",
+        "bytes": 62201
+      },
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/TroyBrowser/Res/TroyBrowser.zip",
+        "bytes": 150665
+      },
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/WkeBrowser/Res/WkeBrowser.zip",
+        "bytes": 194809
+      },
+      {
+        "path": "ThirdPart/DuiLib_Ultimate/src/Demos/xlgamebox/Res/xlgamebox.zip",
+        "bytes": 494590
+      },
+      {
+        "path": "ThirdPart/sdhash/win32/sdhash-ui/library.zip",
+        "bytes": 4709912
+      },
+      {
+        "path": "ThirdPart/sdhash/x64/sdhash-ui/library.zip",
+        "bytes": 4709912
+      }
+    ]
+  }
+}

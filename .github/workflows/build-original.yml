@@ -1,0 +1,82 @@
+name: Build original modules
+on:
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Build selection
+        type: choice
+        options: [all, windows, java]
+        default: all
+      build_2024:
+        description: Build 2024 integration (requires upstream ThirdPart and InterfaceCommon)
+        type: boolean
+        default: false
+  push:
+    paths: ['original/**', 'ci/**', '.github/workflows/build-original.yml']
+  pull_request:
+    paths: ['original/**', 'ci/**', '.github/workflows/build-original.yml']
+permissions:
+  contents: read
+concurrency:
+  group: original-build-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows:
+    if: inputs.scope != 'java'
+    runs-on: windows-2022
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [collector-2023, bandwidth-collector]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile complete original Windows project
+        run: python ci/build-original-windows.py ${{ matrix.module }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-${{ matrix.module }}-windows-x64
+          path: artifacts/${{ matrix.module }}/
+          if-no-files-found: error
+  java:
+    if: inputs.scope != 'windows'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [detector-phf, detector-legacy, simulator]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '8'
+      - name: Package complete original Java project
+        run: mvn -B -ntp -f original/${{ matrix.module }}/pom.xml -Dmaven.test.skip=true package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-${{ matrix.module }}-java
+          path: |
+            original/${{ matrix.module }}/target/*.jar
+            original/${{ matrix.module }}/target/lib/
+            original/${{ matrix.module }}/random_forest.pmml
+          if-no-files-found: error
+  upstream-2024:
+    if: github.event_name == 'workflow_dispatch' && inputs.build_2024
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify external upstream prerequisites
+        shell: pwsh
+        run: |
+          if (!(Test-Path original/collector-2024/ThirdPart/cJSON/include/cJSON.c) -or !(Test-Path original/collector-2024/InterfaceCommon)) {
+            throw '2024 upstream integration requires external ThirdPart and InterfaceCommon submodules. See docs/original-system.md.'
+          }
+      - run: python ci/build-original-windows.py collector-2024
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-collector-2024-windows-x64
+          path: artifacts/collector-2024/
+          if-no-files-found: error

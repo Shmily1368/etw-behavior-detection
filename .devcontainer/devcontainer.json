@@ -1,0 +1,20 @@
+{
+  "name": "ETW cloud development",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "customizations": {
+    "codespaces": {
+      "repositories": {
+        "Shmily1368/ETWCollector_2024": {
+          "permissions": {
+            "contents": "read"
+          }
+        },
+        "Shmily1368/ETWDataCollector": {
+          "permissions": {
+            "contents": "read"
+          }
+        }
+      }
+    }
+  }
+}

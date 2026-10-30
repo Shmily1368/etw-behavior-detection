@@ -1,0 +1,5 @@
+{
+  "source_modules": 7,
+  "credential_scan": "See credential-audit.json and credential-history-audit.json",
+  "verification": "See build-verification.json for current GitHub build evidence"
+}

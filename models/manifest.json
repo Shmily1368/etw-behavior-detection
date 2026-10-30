@@ -1,0 +1,11 @@
+{
+  "manifest_version": 1,
+  "model_sha256": "5c84498d91fe69b6c05795ff2cc0ab8b3e853eba6dee3690836ec49568568490",
+  "api_dictionary_sha256": "7ae1002b5b3fe3726ca0e240a953617cf14f7f1b9977926d1e284f0d28d8b8fd",
+  "input_dimensions": 2863,
+  "model_feature_fields": 950,
+  "trees": 100,
+  "candidate_feature_version": "legacy-api-groups-v1",
+  "training_and_evaluation_status": "not_reproduced",
+  "source_revision": "8591e0a7edb15924969d993a3bb5476bb820377a"
+}

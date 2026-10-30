@@ -1,0 +1,11 @@
+/build/
+/detector/target/
+/results/
+/captures/
+*.log
+.DS_Store
+.personal-git/
+git-personal
+.vscode/
+__pycache__/
+*.pyc

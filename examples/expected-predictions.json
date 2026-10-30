@@ -1,0 +1,12 @@
+[
+  {
+    "id": "aggregation-fixture",
+    "class_code": "M0",
+    "model_score": 0.3442788906941793
+  },
+  {
+    "id": "boundary-fixture",
+    "class_code": "M0",
+    "model_score": 0.39468603036823074
+  }
+]

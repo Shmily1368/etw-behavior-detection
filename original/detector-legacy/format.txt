@@ -1,0 +1,315 @@
+1030727889 36 ThreadCSwitch
+1
+NewThreadId 0 4
+2429279289 67 FileIoRead
+4
+TTID 16 8
+FileObject 24 8
+FileKey 32 8
+FileName 40 0
+1030727889 1 ThreadStart
+2
+ProcessId 0 4
+TThreadId 4 4
+1030727889 3 ThreadDCStart
+2
+ProcessId 0 4
+TThreadId 4 4
+1030727889 2 ThreadEnd
+2
+ProcessId 0 4
+TThreadId 4 4
+749821213 3 ImageDCStart
+6
+ImageBase 0 8
+ImageSize 8 8
+ProcessId 16 4
+FileName 56 0
+IsMainModule 100 4
+Certificate 56 0
+2429279289 68 FileIoWrite
+5
+TTID 16 8
+FileObject 24 8
+FileKey 32 8
+FileName 40 0
+IsDownload 40 0
+2429279289 32 FileIoFileCreate
+2
+FileObject 0 8
+FileName 8 0
+2429279289 0 FileIoName
+2
+FileObject 0 8
+FileName 8 0
+2429279289 64 FileIoCreate
+3
+FileObject 16 8
+ShareAccess 32 4
+FileName 40 0
+2429279289 71 FileIoRename
+5
+TTID 8 8
+FileObject 16 8
+FileKey 24 8
+FileName 32 0
+NewFileName 32 0
+749821213 10 ImageLoad
+6
+ImageBase 0 8
+ImageSize 8 8
+ProcessId 16 4
+FileName 56 0
+IsMainModule 100 4
+Certificate 56 0
+2586315456 11 TcpIpRecvIPV4
+6
+PID 0 4
+size 4 4
+daddr 4 0
+saddr 4 0
+dport 4 0
+sport 4 0
+2586315456 13 TcpIpDisconnectIPV4
+6
+PID 0 4
+size 4 4
+daddr 4 0
+saddr 4 0
+dport 4 0
+sport 4 0
+2586315456 10 TcpIpSendIPV4
+6
+PID 0 4
+size 4 4
+daddr 4 0
+saddr 4 0
+dport 4 0
+sport 4 0
+1030727888 1 ProcessStart
+5
+ProcessId 8 4
+ParentId 12 4
+UserSID 48 0
+ImageFileName 48 0
+CommandLine 48 0
+1030727888 2 ProcessEnd
+2
+ProcessId 8 4
+ImageFileName 12 0
+1030727888 3 ProcessDCStart
+5
+ProcessId 8 4
+ParentId 12 4
+UserSID 48 0
+ImageFileName 48 0
+CommandLine 48 0
+3208270021 10 UdpIpSendIPV4
+6
+PID 0 4
+size 4 4
+daddr 4 0
+saddr 4 0
+dport 4 0
+sport 4 0
+3208270021 11 UdpIpRecvIPV4
+6
+PID 0 4
+size 4 4
+daddr 4 0
+saddr 4 0
+dport 4 0
+sport 4 0
+2586315456 12 TcpIpConnectIPV4
+6
+PID 0 4
+size 4 4
+daddr 4 0
+saddr 4 0
+dport 4 0
+sport 4 0
+2586315456 15 TcpIpAcceptIPV4
+6
+PID 0 4
+size 4 4
+daddr 4 0
+saddr 4 0
+dport 4 0
+sport 4 0
+2429279289 66 FileIoClose
+3
+TTID 8 8
+FileObject 16 8
+FileKey 24 8
+2429279232 11 VisibleWindowInfo
+7
+Visible 0 4
+Toolbar 4 4
+Handle 8 8
+Left 16 8
+Top 24 8
+Right 32 8
+Bottom 40 8
+2429279235 12 FileMacroCheck
+3
+MacroResult 0 4
+FileName 4 0
+MacroContent 4 0
+2429279235 13 IpConfig
+1
+Ip 0 0
+3740466758 32 Callstack
+0
+2429279289 70 FileIoDelete
+4
+TTID 8 8
+FileObject 16 8
+FileKey 24 8
+FileName 32 0
+2429279235 15 HealthCheck
+1
+CheckID 1 1
+2429279235 16 InitSignal
+1
+DeviceBootTime 1 1
+2697037115 4104 PowerShellCheck
+1
+CommandLine 0 0
+2429279235 17 AutorunInfo
+1
+FileName 0 0
+479531630 3006 DNSQueryRequest
+1
+QueryDomainName 0 0
+479531630 3020 DNSQueryResult
+1
+QueryDomainName 0 0
+2429279235 18 RansomCheck
+4
+ParentId 0 4
+ProcessName 4 0
+FileName 4 0
+ExtraInfo 4 0
+1417975333 10 EVTSecurity
+1
+CommandLine 0 0
+2924704302 10 RegistryCreate
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 11 RegistryOpen
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 13 RegistryQuery
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 14 RegistrySetValue
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 15 RegistryDeleteValue
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 16 RegistryQueryValue
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 20 RegistrySetInformation
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 2
+2924704302 22 RegistryKCBCreate
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 23 RegistryKCBDelete
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 27 RegistryClose
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2924704302 12 RegistryDelete
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 8
+KeyName 24 0
+2429279235 19 ZoneIdentifier
+5
+ProcessId 0 4
+ZoneId 4 4
+ReferrerUrl 8 0
+HostUrl 8 0
+FileName 8 0
+2429279235 20 RuleIdentifier
+3
+RuleId 0 4
+EventName 4 0
+CommandLine 4 0
+2429279235 14 DeviceRemoveAble
+4
+SerialNumber 0 4
+RootPath 4 0
+VolumeName 4 0
+FileSystem 4 0
+2429279235 21 HashInfo
+4
+ProcessId 0 4
+size 4 4
+FileName 4 0
+MD5 4 0
+1466972255 10 ProcessAccess
+5
+ProcessId 0 4
+ParentId 4 4
+Status 8 4
+ProcessName 8 0
+ParentProcessName 8 0
+1466972255 6 DriverLoaded
+5
+Certificate 0 4
+SignatureType 4 0
+SignatureStatus 4 0
+FileName 4 0
+MD5 4 0
+2429279235 22 PowershellResult
+3
+MacroResult 0 4
+ExtraInfo 4 0
+CommandLine 4 0

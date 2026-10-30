@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment></comment>
+
+
+    <!--Kafka Information   -->
+    <entry key="KafkaBrokerServer">kafka:9092</entry>
+    <entry key="KafkaConsumerGroup">testGroup</entry>
+    <entry key="IllustratorTopic">illustrator_poc</entry>
+    <entry key="ReceiveGraphTopic">graph_poc</entry>
+    <entry key="EventTopic">event</entry>
+    <entry key="ClientLogTopic">client_log</entry>
+    <entry key="SASL">true</entry>
+    <entry key="AlarmTopic">alarm</entry>
+    <entry key="AlarmConsumerGroup">alarm</entry>
+    <entry key="LockEventTopic">lock_event</entry>
+
+    <!--Debug Information   -->
+    <entry key="DumpProcessedEvent">false</entry>    <!-- whether dump processed events-->
+    <entry key="DumpExtraDetectionFactors">false</entry>    <!-- whether dump processed events-->
+    <entry key="PowerShellDump">true</entry>    <!-- whether dump processed events-->
+    <entry key="DebugOutput">false</entry>       <!-- when true, try to receive process name -->
+    <entry key="UseEncryptedSignatures">false</entry>       <!-- when true, use encrypted signatures -->
+    <entry key="DumpFileDirectory">dumpProcessedEvent</entry>       <!-- where is those dumped files -->
+    <entry key="TurnOnDNSResolution">true</entry>
+
+    <!--Detection Details   -->
+    <entry key="PerformDetection">true</entry>  <!-- whether detect or simply receive -->
+    <entry key="CacheWindowSize">10000</entry>  <!-- cache how many records of one thread before performing detection -->
+    <entry key="SlideWindowSize">3000</entry>   <!-- slide window size -->
+    <entry key="WaitTimeMillis">6000</entry>   <!-- after $this millis, if the cache is still smaller than $CacheWindowSize, perform detection -->
+    <entry key="ThreadPoolSize">8</entry>   <!-- size of fixed thread pool for detection -->
+    <entry key="MatchProportion">0.7</entry>    <!-- match proportion >= $this will be regarded as malicious -->
+    <entry key="MatchAllSigs">true</entry>    <!-- if false, when one signature is matched, the iteration will break -->
+    <entry key="ApiDifference">20</entry>       <!-- api difference <= $this will be regared as malicious -->
+    <entry key="Phfs">all_keylogger_new@all_remotedesktop_new@all_remoteshell_new@all_audiorecord_new@all_downloadexec_new@reflective_loading</entry>       <!-- detect what kinds of phfs, splitted by @ -->
+
+
+    <entry key="MaxFailTime">10</entry>
+    <entry key="IPCPort">45538</entry>
+    <entry key="UseLegacy">false</entry>
+    <entry key="ProcessRetentionTime">30</entry><!--ProcessTable中ProcessEnd后，Process停留的时间-->
+    <entry key="ProcessorBufferSize">10</entry><!-- MessageReceiver和MessageProessor之间的 缓冲区大小，这个参数要根据MaxClientPerProessor一起合理配置，如果Proessor过多且缓冲区过大，会造成占用内存过多。如果配置多少将会造成Receiver休眠过长-->
+    <entry key="MaxClientPerProessor">100</entry><!-- 每个Processor处理的client数量-->
+    <entry key="Neo4jClientThreads">1</entry><!-- Neo4jClient线程数量-->
+    <entry key="Neo4jCleanPolicy">EveryDay</entry><!-- Neo4j清除无效数据的策略 EveryMinute EveryDay-->
+    <entry key="EnableNeo4jCleaner">false</entry>
+    <entry key="ack">1</entry>
+    <entry key="retries">3</entry>
+    <entry key="MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION">1</entry>
+    <entry key="KeepIpCount">100</entry>
+    <entry key="DeduplicatingBloomFilterKeepTime">60</entry>
+    <entry key="DeduplicatingEventBloomFilterLength">1000000</entry>
+    <entry key="MaxPollRecords">20</entry>
+    <entry key="SensitiveProgramReportInterval">300</entry>
+    <entry key="DumpSnapshot">false</entry>
+    <entry key="IpExternalSlidingWindowThreshold">10</entry>
+
+    <entry key="ExcludeExtensionOfDownloadFile">ini,dll,pf,xml,mdb,db,lnk,db-journal,dat,list,pyc,library-ms,config</entry>
+
+    <entry key="CenterUrl">https://127.0.0.1:8899</entry>
+
+    <!--Redis   -->
+    <entry key="redis">127.0.0.1:6379</entry>
+    <!--Mysql   -->
+    <entry key="url">127.0.0.1:3306</entry>
+    <entry key="username">root</entry>
+    <entry key="password">zjulist</entry>
+</properties>

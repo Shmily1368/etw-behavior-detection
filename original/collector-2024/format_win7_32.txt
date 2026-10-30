@@ -1,0 +1,521 @@
+749821213 2 ImageUnLoad
+12
+ImageBase 0 4
+ImageSize 4 4
+ProcessId 8 4
+ImageChecksum 12 4
+TimeDateStamp 16 4
+Reserved0 20 4
+DefaultBase 24 4
+Reserved1 28 4
+Reserved2 32 4
+Reserved3 36 4
+Reserved4 40 4
+FileName 44 0
+
+749821213 3 ImageDCStart
+12
+ImageBase 0 4
+ImageSize 4 4
+ProcessId 8 4
+ImageChecksum 12 4
+TimeDateStamp 16 4
+Reserved0 20 4
+DefaultBase 24 4
+Reserved1 28 4
+Reserved2 32 4
+Reserved3 36 4
+Reserved4 40 4
+FileName 44 0
+
+749821213 4 ImageDCEnd
+12
+ImageBase 0 4
+ImageSize 4 4
+ProcessId 8 4
+ImageChecksum 12 4
+TimeDateStamp 16 4
+Reserved0 20 4
+DefaultBase 24 4
+Reserved1 28 4
+Reserved2 32 4
+Reserved3 36 4
+Reserved4 40 4
+FileName 44 0
+
+749821213 10 ImageLoad
+12
+ImageBase 0 4
+ImageSize 4 4
+ProcessId 8 4
+ImageChecksum 12 4
+TimeDateStamp 16 4
+Reserved0 20 4
+DefaultBase 24 4
+Reserved1 28 4
+Reserved2 32 4
+Reserved3 36 4
+Reserved4 40 4
+FileName 44 0
+
+1030727888   1  ProcessStart
+11
+UniqueProcessKey 0 4
+ProcessId  4 4
+ParentId   8 4
+SessionId  12 4
+ExitStatus  16 4
+DirectoryTableBase 20 4
+Reserved0 24 4
+Reserved1 28 4
+UserSID    32 0
+ImageFileName   32 0
+CommandLine   32  0
+
+1030727888   2  ProcessEnd
+11
+UniqueProcessKey 0 4
+ProcessId  4 4
+ParentId   8 4
+SessionId  12 4
+ExitStatus  16 4
+DirectoryTableBase 20 4
+Reserved0 24 4
+Reserved1 28 4
+UserSID    32 0
+ImageFileName   32 0
+CommandLine   32  0
+
+1030727888   3  ProcessDCStart
+11
+UniqueProcessKey 0 4
+ProcessId  4 4
+ParentId   8 4
+SessionId  12 4
+ExitStatus  16 4
+DirectoryTableBase 20 4
+Reserved0 24 4
+Reserved1 28 4
+UserSID    32 0
+ImageFileName   32 0
+CommandLine   32  0
+
+1030727888   4  ProcessDCEnd
+11
+UniqueProcessKey 0 4
+ProcessId  4 4
+ParentId   8 4
+SessionId  12 4
+ExitStatus  16 4
+DirectoryTableBase 20 4
+Reserved0 24 4
+Reserved1 28 4
+UserSID    32 0
+ImageFileName   32 0
+CommandLine   32  0
+
+1030727889 1 ThreadStart
+14
+ProcessId 0 4
+TThreadId 4 4
+StackBase 8 4
+StackLimit 12 4
+UserStackBase 16 4
+UserStackLimit 20 4
+Affinity 24 4
+Win32StartAddr 28 4
+TebBase 32 4
+SubProcessTag 36 4
+BasePriority 40 1
+PagePriority 41 1
+IoPriority 42 1
+ThreadFlags 43 1
+
+1030727889 2 ThreadEnd
+14
+ProcessId 0 4
+TThreadId 4 4
+StackBase 8 4
+StackLimit 12 4
+UserStackBase 16 4
+UserStackLimit 20 4
+Affinity 24 4
+Win32StartAddr 28 4
+TebBase 32 4
+SubProcessTag 36 4
+BasePriority 40 1
+PagePriority 41 1
+IoPriority 42 1
+ThreadFlags 43 1
+
+1030727889 3 ThreadDCStart
+14
+ProcessId 0 4
+TThreadId 4 4
+StackBase 8 4
+StackLimit 12 4
+UserStackBase 16 4
+UserStackLimit 20 4
+Affinity 24 4
+Win32StartAddr 28 4
+TebBase 32 4
+SubProcessTag 36 4
+BasePriority 40 1
+PagePriority 41 1
+IoPriority 42 1
+ThreadFlags 43 1
+
+1030727889 36 ThreadCSwitch
+12
+NewThreadId 0 4
+OldThreadId 4 4
+NewThreadPriority 8 1
+OldThreadPriority 9 1
+PreviousCState 10 1
+SpareByte 11 1
+OldThreadWaitReason 12 1
+OldThreadWaitMode 13 1
+OldThreadState 14 1
+OldThreadWaitIdealProcessor 15 1
+NewThreadWaitTime 16 4
+Reserved 20 4
+
+
+1171836109 33 ALPCALPC-Send-Message
+1
+MessageID 0 4
+
+1171836109 34 ALPCALPC-Receive-Message
+1
+MessageID 0 4
+
+1171836109 35 ALPCALPC-Wait-For-Reply
+1
+MessageID 0 4
+
+1171836109 36 ALPCALPC-Wait-For-New-Message
+2
+IsServerPort 0 4
+PortName 4 0
+
+1171836109 37 ALPCALPC-Unwait
+1
+Status 0 4
+
+2429279289 0 FileIoName
+2
+FileObject 0 4
+FileName 4 0
+
+2429279289 32 FileIoFileCreate
+2
+FileObject 0 4
+FileName 4 0
+
+2429279289 35 FileIoFileDelete
+2
+FileObject 0 4
+FileName 4 0
+
+2429279289 64 FileIoCreate
+7
+IrpPtr 0 4
+TTID 4 4
+FileObject 8 4
+CreateOptions 12 4
+FileAttributes 16 4
+ShareAccess 20 4
+OpenPath 24 0
+
+2429279289 66 FileIoClose
+4
+IrpPtr 0 4
+TTID 4 4
+FileObject 8 4
+FileKey 12 4
+
+2429279289 67 FileIoRead
+7
+Offset 0 8
+IrpPtr 8 4
+TTID 12 4
+FileObject 16 4
+FileKey 20 4
+IoSize 24 4
+IoFlags 28 4
+
+2429279289 68 FileIoWrite
+7
+Offset 0 8
+IrpPtr 8 4
+TTID 12 4
+FileObject 16 4
+FileKey 20 4
+IoSize 24 4
+IoFlags 28 4
+
+2429279289 69 FileIoSetInfo
+6
+IrpPtr 0 4
+TTID 4 4
+FileObject 8 4
+FileKey 12 4
+ExtraInfo 16 4
+InfoClass 20 4
+
+2429279289   70 FileIoDelete
+6
+IrpPtr 0 4
+TTID 4 4
+FileObject 8 4
+FileKey 12 4
+ExtraInfo 16 4
+InfoClass 20 4
+
+2429279289   71 FileIoRename
+6
+IrpPtr 0 4
+TTID 4 4
+FileObject 8 4
+FileKey 12 4
+ExtraInfo 16 4
+InfoClass 20 4
+
+2429279289 73 FileIoFlush
+4
+IrpPtr 0 4
+TTID 4 4
+FileObject 8 4
+FileKey 12 4
+
+2429279289 77 FileIoDirNotify
+8
+IrpPtr 0 4
+TTID 4 4
+FileObject 8 4
+FileKey 12 4
+Length 16 4
+InfoClass 20 4
+FileIndex 24 4
+FileName 28 0
+
+2586315456 10 TcpIpSendIPV4
+10
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+startime 20 4
+endtime 24 4
+seqnum 28 4
+connid 32 4
+
+2586315456 11 TcpIpRecvIPV4
+8
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+seqnum 20 4
+connid 24 4
+
+2586315456 12 TcpIpConnectIPV4
+15
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+mss 20 2
+sackopt 22 2
+tsopt 24 2
+wsopt 26 2
+rcvwin 28 4
+rcvwinscale 32 2
+sndwinscale 34 2
+seqnum 36 4
+connid 40 4
+
+2586315456 13 TcpIpDisconnectIPV4
+8
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+seqnum 20 4
+connid 24 4
+
+2586315456 14 TcpIpRetransmitIPV4
+8
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+seqnum 20 4
+connid 24 4
+
+2586315456 15 TcpIpAcceptIPV4
+15
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+mss 20 2
+sackopt 22 2
+tsopt 24 2
+wsopt 26 2
+rcvwin 28 4
+rcvwinscale 32 2
+sndwinscale 34 2
+seqnum 36 4
+connid 40 4
+
+2586315456 16 TcpIpReconnectIPV4
+8
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+seqnum 20 4
+connid 24 4
+
+2586315456 18 TcpIpTCPCopyIPV4
+8
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+seqnum 20 4
+connid 24 4
+
+2924704302 10 RegistryCreate
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 11 RegistryOpen
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 12 RegistryDelete
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 13 RegistryQuery
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 14 RegistrySetValue
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 15 RegistryDeleteValue
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 16 RegistryQueryValue
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 20 RegistrySetInformation
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 2
+
+2924704302 22 RegistryKCBCreate
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 23 RegistryKCBDelete
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+2924704302 27 RegistryClose
+5
+InitialTime 0 8
+Status 8 4
+Index 12 4
+KeyHandle 16 4
+KeyName 20 0
+
+3208270021 10 UdpIpSendIPV4
+8
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+seqnum 20 4
+connid 24 4
+
+3208270021 11 UdpIpRecvIPV4
+8
+PID 0 4
+size 4 4
+daddr 8 4
+saddr 12 4
+dport 16 2
+sport 18 2
+seqnum 20 4
+connid 24 4
+
+
+
+3458056116 51 PerfInfoSysClEnter
+1
+SysCallAddress 0 4
+

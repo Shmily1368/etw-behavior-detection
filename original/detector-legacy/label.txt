@@ -1,0 +1,65 @@
+PT1,0,1,TRUE,The process has network connections.
+PT2,1,1,PHF,Access sensitive information
+PT3,0,0.5,CODE_SOURCE,Access data from network.
+PT4,0,0.5,CODE_SOURCE,Load uncertificated images from network.
+PT5,1,0.5,PHF,AudioRecord
+PT6,1,0.5,PHF,Download and Exec
+PT7,1,1,PHF,Keylogger
+PT8,1,0.48,PHF,RemoteDesktop
+PT9,1,0.63,PHF,RemoteShell
+PT10,0,1,FEATURE,Its parent or ancestor process has network connection.
+PT11,0,0.2,CODE_SOURCE,Remote Reflective Loading
+PT12,1,1,PHF,Execute sensitive programs
+PT13,0,0.2,CODE_SOURCE,Local Reflective Loading
+PT14,0,1,FEATURE,The process has no human interaction.
+PT15,0,0.8,FEATURE,The process is executed automatically
+PT16,1,0.63,PHF,Screen Grab
+PT17,0,1,FALSE,be injected by untrusted code.
+PT18,0,1,CODE_SOURCE,Load own uncertificate exe
+PT181,0,1,CODE_SOURCE,Load own uncertificate exe,expired.
+PT182,0,1,CODE_SOURCE,Load own uncertificate exe,untrusted.
+PT183,0,1,CODE_SOURCE,Load own uncertificate exe,altered.
+PT184,0,1,CODE_SOURCE,Load own uncertificate exe,cancelled.
+PT19,1,0.63,PHF,Its descendant process has done PHF.
+PT20,0,0.5,CODE_SOURCE,Execute network script.
+PT21,0,1,CODE_SOURCE,Executed by network code.
+PT22,0,0.5,CODE_SOURCE,Exe is downloaded from network.
+PT23,0,1,CODE_SOURCE,Exe is from portable device
+PT24,0,1,FEATURE,Exe is modified or created recently
+PT26,0,1,PHF,Receive sensitive file from network
+PT27,0,1,CODE_SOURCE,Execute macro code.
+PT28,0,1,CODE_SOURCE, be injected by macro code.
+PT30,0,1,PHF,Remote thread has done PHF.
+PT40,0,1,PHF,injecter.
+PT41,0,1,PHF,be injected.
+PT42,0,1,PHF,lsass injection.
+PT43,0,1,PHF,Intranet port scan.
+PT50,0,1,FALSE,script process.
+PT52,0,1,FALSE,Victim thread access sensitive information
+PT65,0,1,FALSE,Victim thread has AudioRecord
+PT67,0,1,FALSE,Victim thread has keylogger
+PT68,0,1,FALSE,Victim thread has RemoteDesktop
+PT69,0,1,FALSE,Victim thread has RemoteShell
+PT72,0,1,FALSE,Victim thread execute sensitive program
+PT76,0,1,FALSE,Victim thread has ScreenGrab
+PT18,0,1,CODE_SOURCE,Load own uncertificate exe
+PT19,1,0.63,FEATURE,Its descendant process has done PHF.
+PT100,0,1,FEATURE,The process is an automatic startup program
+PT101,0,1,FEATURE,The process is sub process of auto run program
+PT105,0,1,FEATURE,The process may be exploited
+PF1,0,1,FEATURE,Its descendant process has visible window
+PF2,0,0.5,FEATURE,HeartBeat
+PF3,0,1,FEATURE,Have visible window.
+PF4,0,1,CODE_SOURCE,Loads an uncertificated image from network
+FT1,0,0.5,FALSE,The file contains data from network.
+FT2,0,1,FALSE,Uncertificated.
+FT23,0,1,FALSE,Uncertificated,expired.
+FT24,0,1,FALSE,Uncertificated,untrusted.
+FT25,0,1,FALSE,Uncertificated,altered.
+FT26,0,1,FALSE,Uncertificated,altered.
+FT3,0,0.25,FALSE,The file may contains sensitive data from PHF.
+FT4,0,1,FALSE,Contains macro.
+FT5,0,1,FALSE,The file contains sensitive information as default.
+FT6,0,1,FALSE,The file is downloaded from network.
+FT7,0,1,FALSE,FIle is from portable device
+FT8,0,1,FALSE,File is modified or created recently

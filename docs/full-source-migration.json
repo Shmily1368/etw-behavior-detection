@@ -1,0 +1,191 @@
+{
+  "sources": [
+    {
+      "label": "v2024",
+      "repository": "Shmily1368/ETWCollector_2024",
+      "branch": "main",
+      "revision": "58b0dc626c8ac06a86f3d1e262f309791b6db056"
+    },
+    {
+      "label": "v2023",
+      "repository": "Shmily1368/ETWDataCollector",
+      "branch": "main",
+      "revision": "8591e0a7edb15924969d993a3bb5476bb820377a"
+    },
+    {
+      "label": "experiments",
+      "repository": "Shmily1368/ETWDataCollector",
+      "branch": "test",
+      "revision": "0a255cdb095a9feb18727cec6bffd31a4172426d"
+    }
+  ],
+  "modules": {
+    "collector-2023": {
+      "files": 12081,
+      "bytes": 225826496,
+      "types": {
+        ".csv": 3,
+        ".rc": 1,
+        ".sln": 1,
+        ".vcxproj": 1,
+        ".filters": 1,
+        ".properites": 1,
+        ".cpp": 76,
+        ".xml": 9,
+        ".h": 445,
+        ".dll": 24,
+        ".cc": 1,
+        ".proto": 13,
+        ".txt": 13,
+        ".hpp": 11460,
+        ".bat": 2,
+        ".sh": 2,
+        ".hxx": 2,
+        ".lib": 20,
+        ".ini": 4,
+        ".conf": 1,
+        ".ico": 1
+      },
+      "sanitized_files": 5,
+      "excluded": {
+        "non_source_runtime_or_archive": 374,
+        "generated_or_private_runtime": 42
+      },
+      "tree_sha256": "7eefb7218fd70a3966dd894f76b9781c3f9bcfa862dabe7dfcee3735c0670239"
+    },
+    "collector-2024": {
+      "files": 605,
+      "bytes": 38856650,
+      "types": {
+        ".csv": 3,
+        ".bat": 11,
+        ".cpp": 109,
+        ".h": 366,
+        ".rc": 1,
+        ".sln": 2,
+        ".vcxproj": 3,
+        ".filters": 3,
+        ".hpp": 16,
+        ".properites": 1,
+        ".xml": 11,
+        ".py": 11,
+        ".c": 6,
+        ".dll": 24,
+        ".cc": 1,
+        ".proto": 13,
+        ".txt": 14,
+        ".hxx": 2,
+        ".ini": 4,
+        ".lst": 1,
+        ".def": 1,
+        ".conf": 1,
+        ".ico": 1
+      },
+      "sanitized_files": 8,
+      "excluded": {
+        "generated_or_private_runtime": 353,
+        "non_source_runtime_or_archive": 197
+      },
+      "tree_sha256": "c1c4313d6c241948751b80a2b754b247a0355c1b66902bab0db92070c4931748"
+    },
+    "detector-phf": {
+      "files": 250,
+      "bytes": 4154209,
+      "types": {
+        "Dockerfile": 1,
+        ".txt": 5,
+        ".xml": 6,
+        ".pmml": 1,
+        ".sh": 1,
+        ".java": 229,
+        ".properties": 5,
+        ".conf": 1,
+        ".py": 1
+      },
+      "sanitized_files": 29,
+      "excluded": {
+        "non_source_runtime_or_archive": 26,
+        "generated_or_private_runtime": 32
+      },
+      "tree_sha256": "693e217867781d2f18c46fa8b3ba204f76ec796b116704afb8a7ae48679f1edf"
+    },
+    "detector-legacy": {
+      "files": 248,
+      "bytes": 1103708,
+      "types": {
+        "Dockerfile": 1,
+        ".txt": 5,
+        ".xml": 6,
+        ".sh": 1,
+        ".java": 228,
+        ".properties": 5,
+        ".conf": 1,
+        ".py": 1
+      },
+      "sanitized_files": 29,
+      "excluded": {
+        "non_source_runtime_or_archive": 23
+      },
+      "tree_sha256": "544b6b9d6ce611d51719236485b95deb4cd7f7f7376fbc8d665c0d37f9a9855a"
+    },
+    "bandwidth-collector": {
+      "files": 12081,
+      "bytes": 225839976,
+      "types": {
+        ".csv": 3,
+        ".rc": 1,
+        ".sln": 1,
+        ".vcxproj": 1,
+        ".filters": 1,
+        ".properites": 1,
+        ".cpp": 76,
+        ".xml": 9,
+        ".h": 445,
+        ".dll": 24,
+        ".cc": 1,
+        ".proto": 13,
+        ".txt": 13,
+        ".hpp": 11460,
+        ".bat": 2,
+        ".sh": 2,
+        ".hxx": 2,
+        ".lib": 20,
+        ".ini": 4,
+        ".conf": 1,
+        ".ico": 1
+      },
+      "sanitized_files": 5,
+      "excluded": {
+        "non_source_runtime_or_archive": 374,
+        "generated_or_private_runtime": 276
+      },
+      "tree_sha256": "15d63c177d5059a803874547aaa8c83152c13d9eb7635cc0b1a73c52c9ebe5ee"
+    },
+    "simulator": {
+      "files": 27,
+      "bytes": 144341,
+      "types": {
+        ".txt": 1,
+        ".conf": 1,
+        ".xml": 1,
+        ".sh": 2,
+        ".java": 22
+      },
+      "sanitized_files": 5,
+      "excluded": {
+        "non_source_runtime_or_archive": 6
+      },
+      "tree_sha256": "4d7e32f2d0be673aacfb4be5ba85b4b8f0843675a73eea62ee4bcc8daee921ca"
+    },
+    "performance-test": {
+      "files": 2,
+      "bytes": 579,
+      "types": {
+        ".sh": 2
+      },
+      "sanitized_files": 0,
+      "excluded": {},
+      "tree_sha256": "6df88a721ea69c7f7f9931b77c34e3e361c40fe839016f5de582b94b25d8aff4"
+    }
+  }
+}

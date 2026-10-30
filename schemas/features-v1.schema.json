@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ETW sparse feature record",
+  "type": "object",
+  "required": ["schema_version", "id", "feature_version", "dimensions", "api_dictionary_sha256", "values", "provenance"],
+  "properties": {
+    "schema_version": {"const": "features-v1"},
+    "id": {"type": "string", "minLength": 1},
+    "feature_version": {"enum": ["legacy-api-groups-v1", "stack-frequency-v1"]},
+    "dimensions": {"const": 2863},
+    "api_dictionary_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "values": {
+      "type": "array", "minItems": 1, "maxItems": 2863,
+      "items": {
+        "type": "array", "minItems": 2, "maxItems": 2,
+        "prefixItems": [
+          {"type": "integer", "minimum": 0, "maximum": 2862},
+          {"type": "number", "minimum": 0, "maximum": 1}
+        ],
+        "items": false
+      }
+    },
+    "provenance": {
+      "type": "object", "required": ["kind", "description"],
+      "properties": {
+        "kind": {"enum": ["synthetic-test", "collected", "imported"]},
+        "description": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$comment": "Runtime also rejects duplicate sparse indices, mismatched dictionary hash, unapproved feature versions and nonnormalized weights with documented rounding tolerance."
+}

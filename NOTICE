@@ -1,0 +1,19 @@
+Windows ETW Behavior Detection
+Copyright (c) 2026 Shmily1368
+
+This public edition consolidates the author's original ETW research projects.
+Exact source revision and extraction decisions are documented in docs/provenance.md.
+Project code and author-provided model/dictionary assets: AGPL-3.0-only.
+SPDX-License-Identifier: AGPL-3.0-only
+
+Build-time dependencies are downloaded by Maven and retain their own licenses.
+JPMML Evaluator 1.5.11: GNU AGPLv3; https://github.com/jpmml/jpmml-evaluator/tree/1.5.11
+Jackson Databind: Apache License 2.0; https://github.com/FasterXML/jackson-databind
+JUnit Jupiter is a test dependency: Eclipse Public License 2.0.
+Other transitive Maven artifacts retain their packaged LICENSE/NOTICE metadata.
+The detector JAR includes this project notice and AGPL text plus per-dependency
+license/notice resources under META-INF/dependency-notices when supplied by jars.
+
+The public build does not include ClamAV, original enterprise configurations,
+private histories, vendor archives, logs or databases.
+Synthetic examples are software fixtures and are not detection evaluation data.
